@@ -4,7 +4,8 @@
 class ExampleAgent:
     """예제 AI 에이전트"""
 
-    def __init__(self, name: str = "ExampleAgent"):
+    def __init__(self, name: str = "ExampleAgent") -> None:
+        """에이전트 초기화"""
         self.name = name
 
     def run(self, task: str) -> str:
@@ -12,7 +13,7 @@ class ExampleAgent:
         return f"{self.name} is processing task: {task}"
 
 
-def main():
+def main() -> None:
     """메인 함수"""
     agent = ExampleAgent()
     result = agent.run("example task")
