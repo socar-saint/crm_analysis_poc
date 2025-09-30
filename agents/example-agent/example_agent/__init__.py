@@ -2,6 +2,7 @@
 
 __version__ = "0.1.0"
 
-from .agent import ExampleAgent
+from .orchestrator import ExampleOrchestratorAgent
+from .worker import ExampleWorkerAgent
 
-__all__ = ["ExampleAgent"]
+__all__ = ["ExampleOrchestratorAgent", "ExampleWorkerAgent"]

@@ -1,7 +1,7 @@
 [project]
-name = "example-agent"
+name = "voc-agent"
 version = "0.1.0"
-description = "Example AI Agent"
+description = "VOC 프로젝트용 오케스트레이션 및 다이얼라이제이션 에이전트"
 requires-python = ">=3.12"
 dependencies = [
     "agent-common",

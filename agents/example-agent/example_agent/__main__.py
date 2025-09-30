@@ -1,6 +1,14 @@
-"""Entry point for example-agent package"""
+"""Example agent 데모 엔트리포인트."""
 
-from .agent import main
+from .orchestrator import ExampleOrchestratorAgent
+
+
+def main() -> None:
+    """Example agent 데모 엔트리포인트"""
+    orchestrator = ExampleOrchestratorAgent()
+    response = orchestrator.run("샘플 응답 생성")
+    print(response.summary)
+
 
 if __name__ == "__main__":
     main()
