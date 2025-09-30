@@ -1,6 +1,4 @@
-"""에이전트간(A2A) 통신에 사용하는 요청/응답 모델."""
-
-from __future__ import annotations
+"""에이전트 간(A2A) 통신에 사용하는 요청/응답 모델."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass

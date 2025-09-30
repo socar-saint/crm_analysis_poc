@@ -2,10 +2,13 @@
 
 import uvicorn
 from a2a.types import AgentSkill
-from google.adk.a2a.utils.agent_to_a2a import to_a2a
+from core_common.logging import get_logger
 
-from ..create_agent_server import create_agent_a2a_server
+from ..settings import settings
+from ..utils import create_agent_a2a_server
 from .orchestration_agent import orchestrator_agent
+
+logger = get_logger(__name__)
 
 app = create_agent_a2a_server(
     agent=orchestrator_agent,
@@ -25,12 +28,13 @@ app = create_agent_a2a_server(
             ],
         )
     ],
-    host="127.0.0.1",
-    port=10000,
+    host=settings.orchestrator_host,
+    port=settings.orchestrator_port,
 ).build()
 
-# ADK의 Agent서빙을 위한 helper 함수인데 A2A 수행중 agent card를 제대로 가져오지 못하거나 프로토콜 에러가 발생됨.
-app_simple = to_a2a(orchestrator_agent)
-
 if __name__ == "__main__":
-    uvicorn.run(app, port=10000)
+    logger.info(
+        "Starting dedicated orchestration server",
+        extra={"host": settings.orchestrator_host, "port": settings.orchestrator_port},
+    )
+    uvicorn.run(app, host=settings.orchestrator_host, port=settings.orchestrator_port)

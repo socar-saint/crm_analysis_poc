@@ -1,16 +1,17 @@
 """Run the VOC agent orchestrator server."""
 
-import os
 from typing import Any
 
 import uvicorn
 from a2a.types import AgentSkill
+from core_common.logging import get_logger
 
-from .create_agent_server import create_agent_a2a_server
 from .orchestrator.orchestration_agent import orchestrator_agent
+from .settings import settings
+from .utils import create_agent_a2a_server
 
-DEFAULT_HOST = os.getenv("VOC_AGENT_HOST", "127.0.0.1")
-DEFAULT_PORT = int(os.getenv("VOC_AGENT_PORT", "10000"))
+logger = get_logger(__name__)
+
 
 ORCHESTRATOR_SKILL = AgentSkill(
     id="stt_orchestrator",
@@ -24,16 +25,23 @@ ORCHESTRATOR_SKILL = AgentSkill(
 )
 
 
-def build_app(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> Any:
+def build_app(host: str | None = None, port: int | None = None) -> Any:
     """Construct the FastAPI application for the orchestrator."""
+
+    resolved_host = host or settings.orchestrator_host
+    resolved_port = port or settings.orchestrator_port
+    logger.debug(
+        "Building orchestrator app",
+        extra={"host": resolved_host, "port": resolved_port},
+    )
 
     application = create_agent_a2a_server(
         agent=orchestrator_agent,
         name="VOC Analysis Pipeline Agent",
         description="Orchestrate STT processes from converting opus format to wav to diarize the given conversation",
         skills=[ORCHESTRATOR_SKILL],
-        host=host,
-        port=port,
+        host=resolved_host,
+        port=resolved_port,
     )
     return application.build()
 
@@ -42,8 +50,10 @@ def main() -> None:
     """Start the orchestrator server using uvicorn."""
 
     app = build_app()
-    print(f"Starting VOC orchestrator server on {DEFAULT_HOST}:{DEFAULT_PORT}")
-    uvicorn.run(app, host=DEFAULT_HOST, port=DEFAULT_PORT)
+    host = settings.orchestrator_host
+    port = settings.orchestrator_port
+    logger.info("Starting VOC orchestrator server", extra={"host": host, "port": port})
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":

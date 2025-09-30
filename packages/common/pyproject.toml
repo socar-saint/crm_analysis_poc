@@ -1,7 +1,7 @@
 [project]
-name = "agent-common"
+name = "ai-common"
 version = "0.1.0"
-description = "Shared utilities for AI agents"
+description = "Core, agent, and MCP helpers shared across the platform"
 requires-python = ">=3.12"
 dependencies = []
 

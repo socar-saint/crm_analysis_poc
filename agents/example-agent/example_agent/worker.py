@@ -1,7 +1,5 @@
 """A2A 워커 역할을 하는 간단한 예제."""
 
-from __future__ import annotations
-
 from agent_common import A2ARequest, A2AResponse, get_logger
 
 logger = get_logger(__name__)

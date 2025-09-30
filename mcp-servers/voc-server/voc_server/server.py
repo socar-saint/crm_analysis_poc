@@ -44,7 +44,7 @@ def gpt_transcribe_tool(file_path: str, language: str, timestamps: bool) -> Any:
     return s
 
 
-async def shutdown(signal: asyncio.Event, loop: asyncio.AbstractEventLoop) -> None:
+async def shutdown(_signal: asyncio.Event, loop: asyncio.AbstractEventLoop) -> None:
     """Cleanup tasks tied to the server's shutdown."""
     print("\nShutdown event received...")
 

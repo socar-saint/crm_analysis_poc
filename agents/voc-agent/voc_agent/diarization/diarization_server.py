@@ -2,10 +2,14 @@
 
 import uvicorn
 from a2a.types import AgentSkill
+from core_common.logging import get_logger
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
-from ..create_agent_server import create_agent_a2a_server
+from ..settings import settings
+from ..utils import create_agent_a2a_server
 from .diarization_agent import diarization_agent
+
+logger = get_logger(__name__)
 
 app = create_agent_a2a_server(
     agent=diarization_agent,
@@ -23,11 +27,15 @@ app = create_agent_a2a_server(
             ],
         )
     ],
-    host="127.0.0.1",
-    port=10001,
+    host=settings.diarization_host,
+    port=settings.diarization_port,
 ).build()
 
 app_simple = to_a2a(diarization_agent)
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=10001)
+    logger.info(
+        "Starting dedicated diarization server",
+        extra={"host": settings.diarization_host, "port": settings.diarization_port},
+    )
+    uvicorn.run(app, host=settings.diarization_host, port=settings.diarization_port)

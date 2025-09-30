@@ -1,7 +1,5 @@
 """A2A 패턴을 따르는 예제 오케스트레이션 에이전트."""
 
-from __future__ import annotations
-
 from agent_common import A2ARequest, A2AResponse, get_logger
 
 from .worker import ExampleWorkerAgent

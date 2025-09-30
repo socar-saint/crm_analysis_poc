@@ -5,14 +5,14 @@ description = "VOC 프로젝트용 오케스트레이션 및 다이얼라이제�
 requires-python = ">=3.12"
 dependencies = [
     "a2a-sdk>=0.3.7",
-    "agent-common",
+    "ai-common",
     "google-adk>=1.15.1",
     "openai>=1.109.1",
     "pydantic>=2.11.9",
 ]
 
 [tool.uv.sources]
-agent-common = { workspace = true }
+ai-common = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

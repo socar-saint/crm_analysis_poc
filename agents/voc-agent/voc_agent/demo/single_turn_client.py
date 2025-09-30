@@ -1,4 +1,4 @@
-"""Agent Client."""
+"""Single-turn demo client for the VOC agent."""
 
 import argparse
 import asyncio
@@ -10,18 +10,20 @@ import httpx
 from a2a.client import A2ACardResolver, ClientConfig, ClientFactory
 from a2a.types import Message, Role, TextPart
 
+from ..settings import settings
 from .text_utils import extract_response_models_from_task, get_human_text_from_response
 
-AGENT_URL = "http://localhost:10000"
+DEFAULT_AGENT_URL = settings.orchestrator_base_url
 
 
-async def run_single_turn_test(message: str) -> None:
-    """Runs a single-turn non-streaming test."""
+async def run_single_turn_test(message: str, agent_url: str | None = None) -> None:
+    """Runs a single-turn non-streaming test against the orchestrator."""
 
-    print(f"--- Connecting to agent at {AGENT_URL}... ---")
+    resolved_url = agent_url or DEFAULT_AGENT_URL
+    print(f"--- Connecting to agent at {resolved_url}... ---")
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(1200)) as httpx_client:
-            card_resolver = A2ACardResolver(httpx_client=httpx_client, base_url=AGENT_URL)
+            card_resolver = A2ACardResolver(httpx_client=httpx_client, base_url=resolved_url)
             card = await card_resolver.get_agent_card()
             client_config = ClientConfig(httpx_client=httpx_client, streaming=False)
             factory = ClientFactory(config=client_config)
@@ -74,15 +76,29 @@ async def run_single_turn_test(message: str) -> None:
         print("Ensure the agent server is running.")
 
 
-if __name__ == "__main__":
-    p = argparse.ArgumentParser(description="Agent Client (Google ADK Tool-Calling)")
-    p.add_argument("command", nargs="+", help="자연어 명령. 예) '이 파일 처리해줘: /path/상담내역1.opus'")
-    p.add_argument("--speakers", default="상담사,고객")
-    args = p.parse_args()
+def main() -> None:
+    """Main function."""
+    parser = argparse.ArgumentParser(description="Agent Client (Google ADK Tool-Calling)")
+    parser.add_argument(
+        "command",
+        nargs="+",
+        help="자연어 명령. 예) '이 파일 처리해줘: /path/상담내역1.opus'",
+    )
+    parser.add_argument("--speakers", default="상담사,고객")
+    parser.add_argument(
+        "--agent-url",
+        default=None,
+        help=f"Override orchestrator base URL (default: {DEFAULT_AGENT_URL})",
+    )
+    args = parser.parse_args()
 
     cmd = "".join(args.command)
     speakers = args.speakers
     if speakers:
         cmd += f"\n(스피커 라벨: {speakers})"
 
-    asyncio.run(run_single_turn_test(message=cmd))
+    asyncio.run(run_single_turn_test(message=cmd, agent_url=args.agent_url))
+
+
+if __name__ == "__main__":
+    main()

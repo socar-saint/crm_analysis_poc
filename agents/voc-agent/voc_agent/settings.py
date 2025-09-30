@@ -15,6 +15,23 @@ class Settings(BaseSettings):
     azure_openai_api_key: str = ""
     azure_openai_endpoint: str = ""
     azure_openai_deployment: str = ""
+    orchestrator_host: str = "127.0.0.1"
+    orchestrator_port: int = 10000
+    diarization_host: str = "127.0.0.1"
+    diarization_port: int = 10001
+    stt_mcp_sse_url: str = "http://localhost:9000/sse"
+
+    @property
+    def orchestrator_base_url(self) -> str:
+        """오케스트레이션 서버 URL"""
+        return f"http://{self.orchestrator_host}:{self.orchestrator_port}"
+
+    @property
+    def diarization_base_url(self) -> str:
+        """다이얼라이제이션 서버 URL"""
+        return f"http://{self.diarization_host}:{self.diarization_port}"
+
+    azure_openai_api_version: str = "2024-12-01-preview"
 
 
 # 설정 인스턴스 생성
