@@ -8,6 +8,8 @@
 ai-agent-platform/
 ├── agents/              # AI 에이전트 패키지들
 │   └── [에이전트별 패키지]
+├── packages/            # 공통 유틸리티 및 재사용 가능 패키지
+│   └── [공통 패키지]
 ├── mcp-servers/         # MCP 서버 패키지들
 │   └── [서버별 패키지]
 ├── pyproject.toml       # 루트 워크스페이스 설정
@@ -36,6 +38,17 @@ cd my-agent
 cd mcp-servers
 mkdir my-server
 cd my-server
+
+# pyproject.toml 생성 (아래 템플릿 참조)
+```
+
+### 공통 패키지 추가
+
+```bash
+# packages 폴더에 새 공통 패키지 생성
+cd packages
+mkdir my-common
+cd my-common
 
 # pyproject.toml 생성 (아래 템플릿 참조)
 ```

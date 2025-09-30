@@ -4,9 +4,13 @@ version = "0.1.0"
 description = "Example AI Agent"
 requires-python = ">=3.12"
 dependencies = [
+    "agent-common",
     # 필요한 의존성을 여기에 추가
     # 예: "openai>=1.0.0",
 ]
+
+[tool.uv.sources]
+agent-common = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

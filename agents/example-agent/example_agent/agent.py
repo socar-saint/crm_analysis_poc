@@ -1,5 +1,9 @@
 """Example Agent implementation"""
 
+from agent_common import get_logger
+
+logger = get_logger(__name__)
+
 
 class ExampleAgent:
     """예제 AI 에이전트"""
@@ -10,7 +14,9 @@ class ExampleAgent:
 
     def run(self, task: str) -> str:
         """에이전트 실행"""
-        return f"{self.name} is processing task: {task}"
+        message = f"{self.name} is processing task: {task}"
+        logger.info(message)
+        return message
 
 
 def main() -> None:
