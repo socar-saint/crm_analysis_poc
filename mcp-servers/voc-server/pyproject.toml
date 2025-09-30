@@ -1,10 +1,10 @@
 [project]
-name = "example-server"
+name = "voc-server"
 version = "0.1.0"
-description = "Example MCP Server"
+description = "VOC 프로젝트용 MCP 서버"
 requires-python = ">=3.12"
 dependencies = [
-    "mcp>=1.15.0",
+    "ffmpeg>=1.4",
 ]
 
 [build-system]
