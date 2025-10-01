@@ -1,7 +1,15 @@
 """pydantic 설정 및 공용 로깅 구성 파일"""
 
+import os
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ENV_FILES = [
+    Path(__file__).resolve().parent.parent / ".env",
+    Path(".env"),
+]
 
 
 class Settings(BaseSettings):
@@ -10,7 +18,11 @@ class Settings(BaseSettings):
     .env 파일에서 환경 변수를 로드합니다.
     """
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=ENV_FILES,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # Azure OpenAI API 설정
     azure_openai_api_key: str = Field(default="", min_length=1)
@@ -41,3 +53,8 @@ class Settings(BaseSettings):
 
 # 설정 인스턴스 생성
 settings = Settings()
+
+# for litellm
+os.environ["AZURE_API_KEY"] = settings.azure_openai_api_key
+os.environ["AZURE_API_BASE"] = settings.azure_openai_endpoint
+os.environ["AZURE_API_VERSION"] = settings.azure_openai_api_version

@@ -23,5 +23,8 @@ voc-agent/
 ## 실행
 
 ```bash
-uv run --package voc-agent python -m voc_agent
+uv run python -m agents.voc-agent.voc_agent.diarization
+
+# another terminal
+uv run adk web agents/voc-agent
 ```

@@ -1,1 +1,0 @@
-"""Prompts for VOC agents."""

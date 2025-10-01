@@ -43,6 +43,7 @@ def create_agent_a2a_server(
         skills=skills,
     )
 
+    # TODO(@socar-piglet): 메모리 서비스 추가
     runner = Runner(
         app_name=agent_card.name,
         agent=agent,
