@@ -26,4 +26,5 @@ app = create_agent_a2a_server(
     ],
     host=settings.diarization_host,
     port=settings.diarization_port,
+    public_host=settings.diarization_public_host,
 ).build()

@@ -1,20 +1,17 @@
 """Server."""
 
-import asyncio
 import logging
-import sys
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
 from .audiofile_tools import opus2wav
 from .pi_masking import mask_pii
+from .s3_download import download_s3_prefix
 from .transcribe_tools import azure_gpt_transcribe
+from .wav_diarization import diarize_stereo_wav
 
-logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
-logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-
-mcp = FastMCP("STT Server", host="localhost", port=9000)
+mcp = FastMCP("STT Server", host="0.0.0.0", port=9000)  # nosec
 
 
 @mcp.tool(description="Masking private information contained in context")
@@ -44,36 +41,51 @@ def gpt_transcribe_tool(file_path: str, language: str, timestamps: bool) -> Any:
     return s
 
 
-async def shutdown(_signal: asyncio.Event, loop: asyncio.AbstractEventLoop) -> None:
-    """Cleanup tasks tied to the server's shutdown."""
-    print("\nShutdown event received...")
+@mcp.tool(description="Diarize a two-channel PCM WAV file by per-channel energy analysis")
+def diarize_wav_tool(
+    file_path: str,
+    frame_seconds: float | None = None,
+    silence_threshold: float | None = None,
+    overlap_margin: float | None = None,
+    min_segment_seconds: float | None = None,
+    output_dir: str | None = None,
+) -> Any:
+    """Expose the stereo WAV diarizer via FastMCP."""
 
-    # Get all running tasks
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+    logging.info("[diarize_wav] file=%s", file_path)
 
-    # Cancel all tasks
-    for task in tasks:
-        task.cancel()
+    def _as_float(value: Any) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
-    print(f"Cancelling {len(tasks)} outstanding tasks")
-    await asyncio.gather(*tasks, return_exceptions=True)
+    result = diarize_stereo_wav(
+        file_path=file_path,
+        frame_seconds=_as_float(frame_seconds),
+        silence_threshold=_as_float(silence_threshold),
+        overlap_margin=_as_float(overlap_margin),
+        min_segment_seconds=_as_float(min_segment_seconds),
+        output_dir=output_dir,
+    )
+    logging.info(
+        "[diarize_wav] status=%s segments=%d",
+        result.get("status"),
+        len(result.get("segments", [])) if isinstance(result, dict) else -1,
+    )
+    return result
 
-    # Stop the loop
-    loop.stop()
-    print("Shutdown complete!")
+
+@mcp.tool(description="S3 uri로 된 파일을 로컬에 다운로드하고, 다운로드한 파일의 경로를 반환합니다.")
+def s3_download_tool(s3_uri: str) -> dict[str, Any]:
+    """주어진 ``s3_uri`` 아래 객체를 임시 디렉터리에 다운로드한다."""
+    result = download_s3_prefix(s3_uri)
+    logging.info("[s3_download] 결과=%s", result)
+    return result
 
 
 # Main entry point with graceful shutdown handling
 if __name__ == "__main__":
-    try:
-        # The MCP masks private information uses asyncio.run() internally
-        mcp.run(transport="sse")
-    except KeyboardInterrupt:
-        print("\nServer shutting down gracefully...")
-        # The asyncio event loop has already been stopped by the KeyboardInterrupt
-        print("Server has been shut down")
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        sys.exit(1)
-    finally:
-        print("Thank you for using the private information masking MCP Server!")
+    mcp.run(transport="sse")

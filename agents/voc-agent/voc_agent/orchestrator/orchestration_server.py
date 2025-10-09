@@ -24,4 +24,5 @@ app = create_agent_a2a_server(
     skills=[ORCHESTRATOR_SKILL],
     host=settings.orchestrator_host,
     port=settings.orchestrator_port,
+    public_host=settings.orchestrator_public_host,
 ).build()

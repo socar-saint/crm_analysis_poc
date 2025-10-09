@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import inspect
 import traceback
+from typing import Any
 from uuid import uuid4
 
 import httpx
@@ -16,64 +17,108 @@ from .text_utils import extract_response_models_from_task, get_human_text_from_r
 DEFAULT_AGENT_URL = settings.orchestrator_base_url
 
 
+async def _execute_single_turn_request(message: str, resolved_url: str) -> Any:
+    """Send a single message and return the resulting task payload."""
+
+    async with httpx.AsyncClient(timeout=httpx.Timeout(1200)) as httpx_client:
+        card_resolver = A2ACardResolver(httpx_client=httpx_client, base_url=resolved_url)
+        card = await card_resolver.get_agent_card()
+        client_config = ClientConfig(httpx_client=httpx_client, streaming=False)
+        factory = ClientFactory(config=client_config)
+        client = factory.create(card=card)
+
+        print("--- Connection successful ---")
+
+        request = Message(
+            message_id=str(uuid4()),
+            role=Role.user,
+            parts=[TextPart(text=message)],
+        )
+
+        result = client.send_message(request)
+        task = await _resolve_task_from_result(result)
+
+        print("--- Response successful ---")
+        return task
+
+
+async def _resolve_task_from_result(result: Any) -> Any:
+    """Normalise streaming/non-streaming responses into a task object."""
+
+    if inspect.isasyncgen(result):
+        last_event: Any = None
+        async for event in result:
+            last_event = event
+        resolved = last_event
+    else:
+        resolved = await result
+
+    if isinstance(resolved, tuple | list):
+        return resolved[0]
+    return resolved
+
+
+def _extract_human_text_from_task(task: Any) -> str:
+    """Return the human-readable text from the final task response."""
+
+    responses = extract_response_models_from_task(task)
+    if responses:
+        last_resp = responses[-1].model_dump()
+        human_text = get_human_text_from_response(last_resp).strip()
+        if human_text:
+            return human_text
+
+    return _latest_agent_text(task)
+
+
+def _latest_agent_text(task: Any) -> str:
+    """Fallback to the agent's latest text message when no response payload exists."""
+
+    history = getattr(task, "history", None) or []
+    for message in reversed(history):
+        role = getattr(message, "role", None)
+        if role != Role.agent:
+            continue
+
+        parts = getattr(message, "parts", None) or []
+        texts: list[str] = []
+        for part in parts:
+            root = getattr(part, "root", part)
+            if getattr(root, "kind", None) != "text":
+                continue
+            text = getattr(root, "text", "")
+            if isinstance(text, str):
+                stripped = text.strip()
+                if stripped:
+                    texts.append(stripped)
+
+        if texts:
+            return "\n".join(texts)
+
+    return ""
+
+
 async def run_single_turn_test(message: str, agent_url: str | None = None) -> None:
     """Runs a single-turn non-streaming test against the orchestrator."""
 
     resolved_url = agent_url or DEFAULT_AGENT_URL
     print(f"--- Connecting to agent at {resolved_url}... ---")
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(1200)) as httpx_client:
-            card_resolver = A2ACardResolver(httpx_client=httpx_client, base_url=resolved_url)
-            card = await card_resolver.get_agent_card()
-            client_config = ClientConfig(httpx_client=httpx_client, streaming=False)
-            factory = ClientFactory(config=client_config)
-            client = factory.create(card=card)
-
-            print("--- Connection successful ---")
-
-            request = Message(
-                message_id=str(uuid4()),
-                role=Role.user,
-                parts=[TextPart(text=message)],
-            )
-
-            # 스트리밍/논-스트리밍 모두 호환
-            result = client.send_message(request)
-            if inspect.isasyncgen(result):
-                # 스트리밍이면 마지막 이벤트(보통 최종 Task)를 결과로
-                last_event = None
-                async for ev in result:
-                    last_event = ev
-                task_or_tuple = last_event
-            else:
-                task_or_tuple = await result
-
-            # (Task, None) 같은 튜플이면 첫 요소 사용
-            task = task_or_tuple[0] if isinstance(task_or_tuple, tuple | list) else task_or_tuple
-            print("--- Response successful ---")
-
-            # response만 추출하여 model_dump()로 출력
-            responses = extract_response_models_from_task(task)
-            if not responses:
-                print("(no response payloads found)")
-                return
-
-            # 마지막 응답만 선택
-            last_resp = responses[-1].model_dump()
-
-            human_text = get_human_text_from_response(last_resp).strip()
-            if not human_text:
-                print("(no human-readable text could be extracted)")
-                return
-
-            print("\n==== LAST TASK TEXT (human-readable) ====\n")
-            print(human_text)
-            print("\n=========================================\n")
-
-    except Exception as e:
+        task = await _execute_single_turn_request(message, resolved_url)
+    except Exception as e:  # pragma: no cover - surfaced to user via print
         traceback.print_exc()
         print(f"--- An error occurred: {e} ---")
         print("Ensure the agent server is running.")
+        return
+
+    human_text = _extract_human_text_from_task(task)
+    if not human_text:
+        print("(no response payloads found)")
+        return
+
+    print("\n==== LAST TASK TEXT (human-readable) ====\n")
+    print(human_text)
+    print("\n=========================================\n")
 
 
 def main() -> None:

@@ -25,7 +25,6 @@ diarization_agent_tool = AgentTool(diarization_agent)
 
 stt_mcp = MCPToolset(
     connection_params=SseConnectionParams(url=settings.stt_mcp_sse_url),
-    tool_filter=["opus2wav_tool", "mask_pii_tool", "gpt_transcribe_tool"],
 )
 
 # Azure OpenAI 배포명(Deployment name)으로 LiteLlm 구성

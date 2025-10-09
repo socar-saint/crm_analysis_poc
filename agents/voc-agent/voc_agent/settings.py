@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     azure_openai_deployment: str = Field(default="", min_length=1)
     azure_openai_api_version: str = Field(default="2024-12-01-preview")
 
+    # 서버 바인딩 주소 (0.0.0.0 = 모든 인터페이스에서 수신)
     orchestrator_host: str = Field(
         default="0.0.0.0",  # nosec
     )
@@ -38,17 +39,22 @@ class Settings(BaseSettings):
         default="0.0.0.0",  # nosec
     )
     diarization_port: int = Field(default=10001)
+
+    # Agent card에 노출될 공개 URL용 호스트 이름
+    orchestrator_public_host: str = Field(default="localhost")
+    diarization_public_host: str = Field(default="localhost")
+
     stt_mcp_sse_url: str = Field(default="http://localhost:9000/sse")
 
     @property
     def orchestrator_base_url(self) -> str:
-        """오케스트레이션 서버 URL"""
-        return f"http://{self.orchestrator_host}:{self.orchestrator_port}"
+        """오케스트레이션 서버 URL (클라이언트 연결용)"""
+        return f"http://{self.orchestrator_public_host}:{self.orchestrator_port}"
 
     @property
     def diarization_base_url(self) -> str:
-        """다이얼라이제이션 서버 URL"""
-        return f"http://{self.diarization_host}:{self.diarization_port}"
+        """다이얼라이제이션 서버 URL (클라이언트 연결용)"""
+        return f"http://{self.diarization_public_host}:{self.diarization_port}"
 
 
 # 설정 인스턴스 생성

@@ -24,18 +24,30 @@ def create_agent_a2a_server(
     skills: list[AgentSkill],
     host: str | None = None,
     port: int | None = None,
+    public_host: str | None = None,
 ) -> A2AFastAPIApplication:
-    """Create an A2A server for any ADK agent."""
+    """Create an A2A server for any ADK agent.
+
+    Args:
+        agent: ADK agent instance
+        name: Agent name
+        description: Agent description
+        skills: List of agent skills
+        host: Host to bind the server to (e.g., "0.0.0.0")
+        port: Port to bind the server to
+        public_host: Public hostname for agent card URL (e.g., "voc-orchestrator")
+    """
 
     resolved_host = host or settings.orchestrator_host
     resolved_port = port or settings.orchestrator_port
+    resolved_public_host = public_host or settings.orchestrator_public_host
 
     capabilities = AgentCapabilities(streaming=True)
 
     agent_card = AgentCard(
         name=name,
         description=description,
-        url=f"http://{resolved_host}:{resolved_port}/",
+        url=f"http://{resolved_public_host}:{resolved_port}/",
         version="1.0.0",
         default_input_modes=["text", "text/plain"],
         default_output_modes=["text", "text/plain"],

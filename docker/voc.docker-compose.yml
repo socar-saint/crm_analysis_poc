@@ -1,0 +1,89 @@
+x-aws-env: &aws_env
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+  AWS_SECURITY_TOKEN: ${AWS_SECURITY_TOKEN:-}
+  AWS_REGION: ${AWS_REGION:-}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
+
+services:
+  voc-server:
+    build:
+      context: ..
+      dockerfile: docker/voc-server.Dockerfile
+    image: voc-server:latest
+    env_file:
+      - ../.env
+    environment:
+      <<: *aws_env
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./docker-volume:/app/downloads
+    restart: unless-stopped
+
+  voc-diarization:
+    build: &voc-agent-build
+      context: ..
+      dockerfile: docker/voc-agent.Dockerfile
+    image: voc-agent:latest
+    command: ["python", "-m", "voc_agent.diarization.__main__"]
+    env_file:
+      - ../.env
+    environment:
+      <<: *aws_env
+      DIARIZATION_HOST: 0.0.0.0
+      DIARIZATION_PORT: 10001
+      DIARIZATION_PUBLIC_HOST: voc-diarization
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+    ports:
+      - "10001:10001"
+    restart: unless-stopped
+    depends_on:
+      - voc-server
+
+  voc-orchestrator:
+    build: *voc-agent-build
+    image: voc-agent:latest
+    command: ["python", "-m", "voc_agent.orchestrator.__main__"]
+    env_file:
+      - ../.env
+    environment:
+      <<: *aws_env
+      ORCHESTRATOR_HOST: 0.0.0.0
+      ORCHESTRATOR_PORT: 10000
+      ORCHESTRATOR_PUBLIC_HOST: voc-orchestrator
+      DIARIZATION_HOST: voc-diarization
+      DIARIZATION_PORT: 10001
+      DIARIZATION_PUBLIC_HOST: voc-diarization
+      STT_MCP_SSE_URL: http://voc-server:9000/sse
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+    ports:
+      - "10000:10000"
+    restart: unless-stopped
+    depends_on:
+      - voc-server
+      - voc-diarization
+
+  ui-for-simple-test:
+    build:
+      context: ..
+      dockerfile: docker/ui-for-simple-test.Dockerfile
+    image: ui-for-simple-test:latest
+    env_file:
+      - ../.env
+    environment:
+      ORCHESTRATOR_HOST: voc-orchestrator
+      ORCHESTRATOR_PORT: 10000
+      RECOMMENDED_QUESTIONS: "질문1, 질문2"
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - voc-orchestrator
+
+networks:
+  default:
+    name: voc-net

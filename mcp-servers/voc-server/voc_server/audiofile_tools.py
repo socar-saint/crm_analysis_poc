@@ -1,9 +1,8 @@
 """Audio file tools."""
 
 import os
+import subprocess
 from typing import Any
-
-import ffmpeg
 
 
 def opus2wav(input_path: str, out_dir: str, sr: int, ch: int) -> Any:
@@ -32,17 +31,50 @@ def opus2wav(input_path: str, out_dir: str, sr: int, ch: int) -> Any:
     base = os.path.splitext(os.path.basename(input_path))[0]
     out_path = os.path.abspath(os.path.join(out_dir, base + ".wav"))
 
-    try:
-        (
-            ffmpeg.input(input_path)
-            .output(out_path, ac=ch, ar=sr, acodec="pcm_s16le")
-            .overwrite_output()
-            .run(quiet=True)
-        )
-        result = {"status": "ok", "wav_path": out_path}
-    except ffmpeg.Error as e:
-        result = {
+    ffmpeg_bin = _resolve_ffmpeg()
+    if not ffmpeg_bin:
+        return {
             "status": "error",
-            "error": e.stderr.decode("utf-8", "ignore") if e.stderr else str(e),
+            "error": "ffmpeg binary not found in PATH and imageio-ffmpeg unavailable",
         }
+
+    cmd = [
+        ffmpeg_bin,
+        "-y",
+        "-i",
+        input_path,
+        "-ac",
+        str(ch),
+        "-ar",
+        str(sr),
+        "-acodec",
+        "pcm_s16le",
+        out_path,
+    ]
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except Exception as e:  # subprocess may raise e.g. FileNotFoundError
+        return {"status": "error", "error": str(e)}
+
+    if proc.returncode != 0:
+        return {"status": "error", "error": proc.stderr or proc.stdout}
+
+    result = {"status": "ok", "wav_path": out_path}
     return result
+
+
+def _resolve_ffmpeg() -> str | None:
+    """Locate an ffmpeg executable, falling back to imageio-ffmpeg when possible."""
+    from shutil import which
+
+    binary = which("ffmpeg")
+    if binary:
+        return binary
+
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()  # type: ignore
+    except Exception:
+        return None
