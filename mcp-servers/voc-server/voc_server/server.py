@@ -1,6 +1,8 @@
 """Server."""
 
+import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -29,6 +31,7 @@ def opus2wav_tool(input_path: str, out_dir: str, sr: int, ch: int) -> Any:
     logging.info("[opus2wav] input file: %s", input_path)
     s = opus2wav(input_path, out_dir, sr, ch)
     logging.info("[opus2wav] output file: %s", out_dir)
+    logging.info("[opus2wav] result: %s", s)
     return s
 
 
@@ -38,6 +41,33 @@ def gpt_transcribe_tool(file_path: str, language: str, timestamps: bool) -> Any:
 
     logging.info("[azure_gpt_transcribe] audio file: %s", file_path)
     s = azure_gpt_transcribe(file_path, language, timestamps)
+    logging.info("[azure_gpt_transcribe] result: %s", s)
+
+    if isinstance(s, dict) and s.get("status") == "ok":
+        downloads_dir = Path.cwd() / "downloads" / "transcriptions"
+        downloads_dir.mkdir(parents=True, exist_ok=True)
+
+        base_name = Path(file_path).stem or "transcription"
+        output_path = downloads_dir / f"{base_name}.json"
+        if output_path.exists():
+            counter = 1
+            while True:
+                candidate = downloads_dir / f"{base_name}_{counter}.json"
+                if not candidate.exists():
+                    output_path = candidate
+                    break
+                counter += 1
+
+        try:
+            with output_path.open("w", encoding="utf-8") as f:
+                json.dump(s, f, ensure_ascii=False, indent=2)
+        except Exception as exc:
+            logging.exception("[azure_gpt_transcribe] failed to save result: %s", exc)
+            s["saved_file_error"] = str(exc)
+        else:
+            s["saved_file"] = str(output_path)
+            logging.info("[azure_gpt_transcribe] saved file: %s", output_path)
+
     return s
 
 

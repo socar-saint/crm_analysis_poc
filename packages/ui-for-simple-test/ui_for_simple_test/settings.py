@@ -44,7 +44,7 @@ class Settings(BaseSettings):
             alias="RECOMMENDED_QUESTIONS",
             validation_alias=AliasChoices("RECOMMENDED_QUESTIONS", "recommended_questions"),
         ),
-    ] = None
+    ] = "내 이름은 코난 탐정이죠, 카페인은 사랑이죠"
 
     @property
     def recommended_questions(self) -> list[str]:

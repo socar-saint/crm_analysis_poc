@@ -44,6 +44,7 @@ def download_s3_prefix(s3_uri: str, destination_dir: str | Path | None = None) -
 
     response = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
     contents = response.get("Contents", [])
+    downloaded_files = []
 
     downloaded = 0
     for obj in contents:
@@ -55,13 +56,12 @@ def download_s3_prefix(s3_uri: str, destination_dir: str | Path | None = None) -
         local_path.parent.mkdir(parents=True, exist_ok=True)
         client.download_file(bucket, key, str(local_path))
         downloaded += 1
+        downloaded_files.append(local_path)
         logger.info("[s3_download] 파일 저장: %s", local_path)
 
     if downloaded == 0:
         logger.warning("[s3_download] 다운로드할 객체를 찾지 못했습니다: %s", s3_uri)
 
     return {
-        "s3_uri": s3_uri,
-        "destination": str(destination_path),
-        "downloaded_files": downloaded,
+        "downloaded_files": downloaded_files,
     }

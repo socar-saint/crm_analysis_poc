@@ -1,7 +1,7 @@
 [project]
 name = "voc-agent"
 version = "0.1.0"
-description = "VOC 프로젝트용 오케스트레이션 및 다이얼라이제이션 에이전트"
+description = "VOC 프로젝트용 오케스트레이션 및 오디오 처리 에이전트"
 requires-python = ">=3.12"
 dependencies = [
     "a2a-sdk>=0.3.7",

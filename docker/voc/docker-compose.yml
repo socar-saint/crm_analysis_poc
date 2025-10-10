@@ -1,0 +1,112 @@
+x-aws-env: &aws_env
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+  AWS_SECURITY_TOKEN: ${AWS_SECURITY_TOKEN:-}
+  AWS_REGION: ${AWS_REGION:-}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
+
+services:
+  mcp-server:
+    build:
+      context: ../..
+      dockerfile: docker/voc/server.Dockerfile
+    image: mcp-server:latest
+    env_file:
+      - ../../.env
+    environment:
+      <<: *aws_env
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+    ports:
+      - "9000:9000"
+    volumes:
+      - ../docker-volume:/app/downloads
+    restart: unless-stopped
+
+  audio-processing:
+    build: &agent-build
+      context: ../..
+      dockerfile: docker/voc/agent.Dockerfile
+    image: audio-processing-agent:latest
+    command: ["python", "-m", "voc_agent.audio_processing.__main__"]
+    env_file:
+      - ../../.env
+    environment:
+      <<: *aws_env
+      AUDIO_PROCESSING_HOST: 0.0.0.0
+      AUDIO_PROCESSING_PORT: 10001
+      AUDIO_PROCESSING_PUBLIC_HOST: audio-processing
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      STT_MCP_SSE_URL: http://mcp-server:9000/sse
+
+    ports:
+      - "10001:10001"
+    restart: unless-stopped
+    depends_on:
+      - mcp-server
+
+  consultation-analysis:
+    build: *agent-build
+    image: consultation-analysis-agent:latest
+    command: ["python", "-m", "voc_agent.consultation_analysis.__main__"]
+    env_file:
+      - ../../.env
+    environment:
+      <<: *aws_env
+      CONSULTATION_ANALYSIS_HOST: 0.0.0.0
+      CONSULTATION_ANALYSIS_PORT: 10002
+      CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+    ports:
+      - "10002:10002"
+    restart: unless-stopped
+    depends_on:
+      - mcp-server
+
+  orchestrator:
+    build: *agent-build
+    image: orchestrator-agent:latest
+    command: ["python", "-m", "voc_agent.orchestrator.__main__"]
+    env_file:
+      - ../../.env
+    environment:
+      <<: *aws_env
+      ORCHESTRATOR_HOST: 0.0.0.0
+      ORCHESTRATOR_PORT: 10000
+      ORCHESTRATOR_PUBLIC_HOST: orchestrator
+      AUDIO_PROCESSING_HOST: audio-processing
+      AUDIO_PROCESSING_PORT: 10001
+      AUDIO_PROCESSING_PUBLIC_HOST: audio-processing
+      CONSULTATION_ANALYSIS_HOST: consultation-analysis
+      CONSULTATION_ANALYSIS_PORT: 10002
+      CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+    ports:
+      - "10000:10000"
+    restart: unless-stopped
+    depends_on:
+      - mcp-server
+      - audio-processing
+      - consultation-analysis
+
+  ui-for-simple-test:
+    build:
+      context: ../..
+      dockerfile: docker/ui-for-simple-test.Dockerfile
+    image: ui-for-simple-test:latest
+    env_file:
+      - ../../.env
+    environment:
+      ORCHESTRATOR_HOST: orchestrator
+      ORCHESTRATOR_PORT: 10000
+      RECOMMENDED_QUESTIONS: "다음 파일을 분석해줄래? s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=9/day=30/hour=0/conversation_id=013ffdc0-9c56-4222-9463-818666f19cae/"
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - orchestrator
+
+networks:
+  default:
+    name: voc-net

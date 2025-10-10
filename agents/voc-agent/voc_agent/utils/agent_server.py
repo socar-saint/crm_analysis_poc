@@ -35,7 +35,7 @@ def create_agent_a2a_server(
         skills: List of agent skills
         host: Host to bind the server to (e.g., "0.0.0.0")
         port: Port to bind the server to
-        public_host: Public hostname for agent card URL (e.g., "voc-orchestrator")
+        public_host: Public hostname for agent card URL (e.g., "orchestrator")
     """
 
     resolved_host = host or settings.orchestrator_host
