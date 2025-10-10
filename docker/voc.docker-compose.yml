@@ -76,7 +76,7 @@ services:
     environment:
       ORCHESTRATOR_HOST: voc-orchestrator
       ORCHESTRATOR_PORT: 10000
-      RECOMMENDED_QUESTIONS: "질문1, 질문2"
+      RECOMMENDED_QUESTIONS: "안녕?, 다음 파일을 분석해줄래? s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=9/day=10/hour=0/conversation_id=003aaba3-7425-42bd-8e94-db71eb070b1f/"
     ports:
       - "3000:3000"
       - "8000:8000"
