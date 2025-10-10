@@ -17,6 +17,11 @@ services:
     environment:
       <<: *aws_env
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "9000:9000"
     volumes:
@@ -37,6 +42,11 @@ services:
       AUDIO_PROCESSING_PORT: 10001
       AUDIO_PROCESSING_PUBLIC_HOST: audio-processing
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
       STT_MCP_SSE_URL: http://mcp-server:9000/sse
 
     ports:
@@ -57,6 +67,11 @@ services:
       CONSULTATION_ANALYSIS_PORT: 10002
       CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "10002:10002"
     restart: unless-stopped
@@ -81,6 +96,11 @@ services:
       CONSULTATION_ANALYSIS_PORT: 10002
       CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "10000:10000"
     restart: unless-stopped
@@ -99,7 +119,12 @@ services:
     environment:
       ORCHESTRATOR_HOST: orchestrator
       ORCHESTRATOR_PORT: 10000
-      RECOMMENDED_QUESTIONS: "다음 파일을 분석해줄래? s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=9/day=30/hour=0/conversation_id=013ffdc0-9c56-4222-9463-818666f19cae/"
+      RECOMMENDED_QUESTIONS: "다음 파일을 분석해줄래? s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=9/day=30/hour=0/conversation_id=013ffdc0-9c56-4222-9463-818666f19cae/, 쏘카가 뭐야?, AI Agent 프로젝트를 소개해줘., 쏘카에서 사용하는 기술 스택은 뭐야?, 피글렛은 실망했다."
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "3000:3000"
       - "8000:8000"

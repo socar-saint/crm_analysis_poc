@@ -42,9 +42,20 @@ class Settings(BaseSettings):
         Field(
             default=None,
             alias="RECOMMENDED_QUESTIONS",
-            validation_alias=AliasChoices("RECOMMENDED_QUESTIONS", "recommended_questions"),
+            validation_alias=AliasChoices(
+                "RECOMMENDED_QUESTIONS",
+                "recommended_questions",
+            ),
         ),
-    ] = "내 이름은 코난 탐정이죠, 카페인은 사랑이죠"
+    ] = (
+        "다음 파일을 분석해줄래? s3://socar-ai-aicc-audio-prod/"
+        "47619241-161a-41a6-b69a-486da84815dc/year=2025/month=9/day=30/"
+        "hour=0/conversation_id=013ffdc0-9c56-4222-9463-818666f19cae/, "
+        "쏘카가 뭐야?, "
+        "AI Agent 프로젝트를 소개해줘., "
+        "쏘카에서 사용하는 기술 스택은 뭐야?, "
+        "피글렛은 실망했다."
+    )
 
     @property
     def recommended_questions(self) -> list[str]:

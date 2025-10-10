@@ -66,6 +66,16 @@ class Settings(BaseSettings):
 
     stt_mcp_sse_url: str = Field(default="http://localhost:9000/sse")
 
+    # Langfuse tracing
+    langfuse_host: str = Field(default="", validation_alias="LANGFUSE_HOST")
+    langfuse_public_key: str = Field(default="", validation_alias="LANGFUSE_PUBLIC_KEY")
+    langfuse_secret_key: str = Field(
+        default="",
+        validation_alias="LANGFUSE_SECRET_KEY",
+        repr=False,
+    )
+    langfuse_release: str = Field(default="", validation_alias="LANGFUSE_RELEASE")
+
     @property
     def orchestrator_base_url(self) -> str:
         """오케스트레이션 서버 URL (클라이언트 연결용)"""
@@ -102,6 +112,11 @@ class Settings(BaseSettings):
         """다이얼라이제이션 서버 URL (호환용)"""
         return self.audio_processing_base_url
 
+    @property
+    def langfuse_enabled(self) -> bool:
+        """Langfuse tracing 활성화 여부"""
+        return bool(self.langfuse_host and self.langfuse_public_key and self.langfuse_secret_key)
+
 
 # 설정 인스턴스 생성
 settings = Settings()
@@ -110,3 +125,12 @@ settings = Settings()
 os.environ["AZURE_API_KEY"] = settings.azure_openai_api_key
 os.environ["AZURE_API_BASE"] = settings.azure_openai_endpoint
 os.environ["AZURE_API_VERSION"] = settings.azure_openai_api_version
+
+if settings.langfuse_host:
+    os.environ.setdefault("LANGFUSE_HOST", settings.langfuse_host)
+if settings.langfuse_public_key:
+    os.environ.setdefault("LANGFUSE_PUBLIC_KEY", settings.langfuse_public_key)
+if settings.langfuse_secret_key:
+    os.environ.setdefault("LANGFUSE_SECRET_KEY", settings.langfuse_secret_key)
+if settings.langfuse_release:
+    os.environ.setdefault("LANGFUSE_RELEASE", settings.langfuse_release)

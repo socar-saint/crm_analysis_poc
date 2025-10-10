@@ -114,6 +114,9 @@ class State(rx.State):
     connection_status: str = "세션 없음"
     recommended_questions: list[str] = settings.recommended_questions
 
+    # 다크모드 상태
+    is_dark_mode: bool = False
+
     def set_current_message(self, message: str) -> None:
         """현재 메시지를 설정합니다."""
         self.current_message = message
@@ -166,6 +169,10 @@ class State(rx.State):
         self.is_connected = False
         self.connection_status = "세션 없음"
 
+    def toggle_dark_mode(self) -> None:
+        """다크모드를 토글합니다."""
+        self.is_dark_mode = not self.is_dark_mode
+
 
 def typing_indicator() -> rx.Component:
     """AI가 답변 중일 때 표시되는 타이핑 인디케이터"""
@@ -177,25 +184,27 @@ def typing_indicator() -> rx.Component:
                     size=20,
                     color="white",
                 ),
-                background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background="#3b82f6",
                 padding="8px",
                 border_radius="50%",
-                box_shadow="0 2px 8px rgba(102, 126, 234, 0.3)",
+                box_shadow="0 2px 4px rgba(59, 130, 246, 0.2)",
             ),
             rx.box(
                 rx.text(
                     "AI가 답변 중입니다...",
-                    color="#1a1a1a",
+                    color=rx.cond(State.is_dark_mode, "#ffffff", "#000000"),
                     font_size="15px",
                     line_height="1.5",
                     font_weight="400",
                 ),
-                background="#f7f7f8",
+                background=rx.cond(State.is_dark_mode, "#374151", "#f9f9f9"),
                 padding="12px 16px",
-                border_radius="18px",
+                border_radius="12px",
                 max_width="600px",
-                box_shadow="0 2px 4px rgba(0, 0, 0, 0.05)",
-                border="1px solid #e5e7eb",
+                box_shadow=rx.cond(
+                    State.is_dark_mode, "0 1px 2px rgba(0, 0, 0, 0.3)", "0 1px 2px rgba(0, 0, 0, 0.05)"
+                ),
+                border=rx.cond(State.is_dark_mode, "1px solid #4b5563", "1px solid #d1d5db"),
             ),
             rx.box(),
             spacing="3",
@@ -208,121 +217,212 @@ def typing_indicator() -> rx.Component:
 
 
 def message_box(message: dict[str, str]) -> rx.Component:
-    """개별 메시지를 표시하는 컴포넌트"""
+    """개별 메시지를 표시하는 컴포넌트 - 이미지와 동일한 디자인"""
     is_user = message["role"] == "user"
 
+    return rx.cond(
+        is_user,
+        # 사용자 메시지 - 오른쪽에 연한 회색 배경
+        rx.box(
+            rx.text(
+                message["content"],
+                color=rx.cond(State.is_dark_mode, "#ffffff", "#111827"),
+                font_size="15px",
+                font_weight="400",
+                line_height="1.5",
+            ),
+            background=rx.cond(State.is_dark_mode, "#374151", "#f3f4f6"),
+            padding="12px 16px",
+            border_radius="8px",
+            max_width="600px",
+            margin_left="auto",
+            margin_bottom="16px",
+            box_shadow=rx.cond(State.is_dark_mode, "0 1px 2px rgba(0, 0, 0, 0.3)", "0 1px 2px rgba(0, 0, 0, 0.05)"),
+            border=rx.cond(State.is_dark_mode, "1px solid #4b5563", "1px solid #e5e7eb"),
+        ),
+        # AI 메시지 - 왼쪽에 투명(흰색) 배경
+        rx.box(
+            rx.text(
+                message["content"],
+                color=rx.cond(State.is_dark_mode, "#ffffff", "#111827"),
+                font_size="15px",
+                line_height="1.5",
+                font_weight="400",
+            ),
+            background=rx.cond(State.is_dark_mode, "#374151", "#ffffff"),
+            padding="12px 16px",
+            border_radius="8px",
+            max_width="600px",
+            margin_bottom="16px",
+            box_shadow=rx.cond(State.is_dark_mode, "0 1px 2px rgba(0, 0, 0, 0.3)", "0 1px 2px rgba(0, 0, 0, 0.05)"),
+            border=rx.cond(State.is_dark_mode, "1px solid #4b5563", "none"),
+        ),
+    )
+
+
+def header() -> rx.Component:
+    """상단 헤더 컴포넌트 - GitHub 링크와 다크모드 토글"""
     return rx.box(
         rx.hstack(
-            rx.cond(
-                ~is_user,
-                rx.box(
-                    rx.icon(
-                        "bot",
-                        size=20,
-                        color="white",
-                    ),
-                    background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    padding="8px",
-                    border_radius="50%",
-                    box_shadow="0 2px 8px rgba(102, 126, 234, 0.3)",
-                ),
-                rx.box(),
-            ),
+            # 왼쪽 GitHub 링크
             rx.box(
-                rx.text(
-                    message["content"],
-                    color=rx.cond(is_user, "white", "#1a1a1a"),
-                    font_size="15px",
-                    line_height="1.5",
-                    font_weight="400",
-                ),
-                background=rx.cond(
-                    is_user,
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    "#f7f7f8",
-                ),
-                padding="12px 16px",
-                border_radius="18px",
-                max_width="600px",
-                box_shadow=rx.cond(
-                    is_user,
-                    "0 2px 8px rgba(102, 126, 234, 0.25)",
-                    "0 2px 4px rgba(0, 0, 0, 0.05)",
-                ),
-            ),
-            rx.cond(
-                is_user,
-                rx.box(
-                    rx.icon(
-                        "user",
-                        size=20,
-                        color="white",
+                rx.link(
+                    rx.text(
+                        "socar-inc/ai-agent-platform",
+                        font_size="14px",
+                        font_weight="500",
+                        color=rx.cond(State.is_dark_mode, "#ffffff", "#000000"),
                     ),
-                    background="linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                    padding="8px",
-                    border_radius="50%",
-                    box_shadow="0 2px 8px rgba(16, 185, 129, 0.3)",
+                    href="https://github.com/socar-inc/ai-agent-platform",
+                    target="_blank",
+                    style={
+                        "text_decoration": "none",
+                        "_hover": {
+                            "text_decoration": "underline",
+                        },
+                    },
                 ),
-                rx.box(),
+                background=rx.cond(State.is_dark_mode, "#1a1a1a", "#f3f4f6"),
+                padding="8px 12px",
+                border_radius="6px",
             ),
-            spacing="3",
-            align="start",
-            justify=rx.cond(is_user, "end", "start"),
+            rx.box(flex="1"),  # 오른쪽 공간 채우기
+            # 다크모드 토글 버튼
+            rx.button(
+                rx.icon(
+                    rx.cond(State.is_dark_mode, "sun", "moon"),
+                    size=20,
+                ),
+                on_click=State.toggle_dark_mode,
+                variant="ghost",
+                style={
+                    "background": "transparent",
+                    "border": "none",
+                    "padding": "8px",
+                    "border_radius": "8px",
+                    "cursor": "pointer",
+                    "_hover": {
+                        "background": rx.cond(State.is_dark_mode, "#374151", "#f3f4f6"),
+                    },
+                },
+            ),
+            justify="between",
+            align="center",
+            width="100%",
+            padding="16px 24px",
+            background=rx.cond(State.is_dark_mode, "#1a1a1a", "#ffffff"),
         ),
-        width="100%",
-        margin_bottom="16px",
+    )
+
+
+def chat_header() -> rx.Component:
+    """채팅 화면용 헤더 컴포넌트 - New Chat 버튼과 다크모드 토글"""
+    return rx.box(
+        rx.hstack(
+            rx.box(flex="1"),  # 왼쪽 공간 채우기
+            # New Chat 버튼
+            rx.button(
+                rx.text(
+                    "New Chat",
+                    font_size="14px",
+                    font_weight="500",
+                    color=rx.cond(State.is_dark_mode, "#ffffff", "#000000"),
+                ),
+                on_click=State.clear_messages,
+                variant="ghost",
+                style={
+                    "background": "transparent",
+                    "border": "none",
+                    "padding": "8px 12px",
+                    "border_radius": "6px",
+                    "cursor": "pointer",
+                    "_hover": {
+                        "background": rx.cond(State.is_dark_mode, "#374151", "#f3f4f6"),
+                    },
+                },
+            ),
+            # 다크모드 토글 버튼
+            rx.button(
+                rx.icon(
+                    rx.cond(State.is_dark_mode, "sun", "moon"),
+                    size=20,
+                ),
+                on_click=State.toggle_dark_mode,
+                variant="ghost",
+                style={
+                    "background": "transparent",
+                    "border": "none",
+                    "padding": "8px",
+                    "border_radius": "8px",
+                    "cursor": "pointer",
+                    "_hover": {
+                        "background": rx.cond(State.is_dark_mode, "#374151", "#f3f4f6"),
+                    },
+                },
+            ),
+            justify="between",
+            align="center",
+            width="100%",
+            padding="16px 24px",
+            background=rx.cond(State.is_dark_mode, "#1a1a1a", "#ffffff"),
+        ),
     )
 
 
 def recommended_question_button(question: str) -> rx.Component:
-    """추천 질문을 전송하는 버튼."""
+    """추천 질문을 전송하는 버튼 - 심플한 텍스트 링크 스타일."""
     return rx.button(
-        question,
+        rx.cond(question.length() > 30, question[:27] + "...", question),  # type: ignore
         on_click=State.send_message(question),  # type: ignore
         disabled=State.is_loading,
-        variant="soft",
-        size="2",
-        color_scheme="indigo",
+        variant="ghost",
+        title=question,  # 전체 텍스트를 툴팁으로 표시
         style={
-            "border_radius": "9999px",
-            "padding": "8px 14px",
-            "font_weight": "500",
-            "white_space": "normal",
-            "width": "100%",
-            "height": "auto",
-            "min_height": "40px",
-            "display": "flex",
-            "align_items": "center",
-            "justify_content": "center",
-            "text_align": "center",
-            "line_height": "1.2",
+            "background": "transparent",
+            "border": "none",
+            "padding": "8px 12px",
+            "font_size": "16px",
+            "font_weight": "400",
+            "color": rx.cond(State.is_dark_mode, "#9ca3af", "#6b7280"),
+            "text_align": "left",
+            "cursor": "pointer",
+            "border_radius": "4px",
+            "transition": "all 0.2s ease",
+            "max_width": "300px",
+            "white_space": "nowrap",
+            "overflow": "hidden",
+            "text_overflow": "ellipsis",
+            "font_family": "monospace",
+            "letter_spacing": "0.5px",
+            "_hover": {
+                "background": rx.cond(State.is_dark_mode, "#374151", "#f3f4f6"),
+                "color": rx.cond(State.is_dark_mode, "#ffffff", "#374151"),
+            },
+            "_active": {
+                "background": rx.cond(State.is_dark_mode, "#4b5563", "#e5e7eb"),
+                "color": rx.cond(State.is_dark_mode, "#ffffff", "#111827"),
+            },
         },
     )
 
 
 def recommended_questions_section() -> rx.Component:
-    """입력 영역 위에 표시되는 추천 질문 목록."""
+    """입력 영역 아래에 표시되는 추천 질문 목록 - 심플한 스타일."""
     return rx.cond(
         State.recommended_questions.length() == 0,  # type: ignore
         rx.box(),
-        rx.vstack(
-            rx.text(
-                "추천 질문",
-                font_size="14px",
-                font_weight="600",
-                color=rx.color("gray", 11),
+        rx.flex(
+            rx.foreach(
+                State.recommended_questions,
+                recommended_question_button,
             ),
-            rx.flex(
-                rx.foreach(
-                    State.recommended_questions,
-                    recommended_question_button,
-                ),
-                direction="column",
-                gap="8px",
-            ),
-            spacing="2",
-            align="start",
+            direction="row",
+            gap="24px",
+            wrap="wrap",
+            justify="center",
             width="100%",
+            max_width="800px",
+            margin_top="32px",
         ),
     )
 
@@ -330,194 +430,241 @@ def recommended_questions_section() -> rx.Component:
 def index() -> rx.Component:
     """챗봇 UI 메인 페이지"""
     return rx.box(
-        rx.center(
-            rx.vstack(
-                # 헤더
-                rx.box(
-                    rx.hstack(
-                        rx.hstack(
-                            rx.icon(
-                                "bot",
-                                size=28,
-                                color="#667eea",
+        rx.vstack(
+            # 상단 헤더 (초기 화면에서는 GitHub 링크, 채팅 화면에서는 다크모드 토글만)
+            rx.cond(
+                State.messages.length() == 0,  # type: ignore
+                header(),
+                chat_header(),
+            ),
+            # 메인 콘텐츠 영역
+            rx.box(
+                rx.cond(
+                    State.messages.length() == 0,  # type: ignore
+                    # 초기 화면
+                    rx.center(
+                        rx.vstack(
+                            rx.text(
+                                "What would you like to know?",
+                                font_size="24px",
+                                font_weight="600",
+                                color=rx.cond(State.is_dark_mode, "#ffffff", "#111827"),
+                                margin_bottom="48px",
+                                text_align="center",
+                                font_family="monospace",
+                                letter_spacing="0.5px",
                             ),
-                            rx.heading(
-                                "AI 챗봇",
-                                size="6",
-                                background="linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                                background_clip="text",
-                                font_weight="700",
-                            ),
-                            spacing="3",
-                            align="center",
-                        ),
-                        rx.hstack(
-                            # 연결 상태 인디케이터 (세션 활성화 여부)
-                            rx.badge(
-                                rx.hstack(
+                            # 중앙 검색창
+                            rx.box(
+                                rx.vstack(
                                     rx.box(
-                                        width="8px",
-                                        height="8px",
-                                        border_radius="50%",
-                                        background=rx.cond(
-                                            State.is_connected,
-                                            "#10b981",  # 초록색 (세션 활성)
-                                            "#94a3b8",  # 회색 (세션 없음)
+                                        rx.hstack(
+                                            rx.text_area(
+                                                placeholder="Ask me anything...",
+                                                value=State.current_message,
+                                                on_change=State.set_current_message,
+                                                name="message_input",
+                                                resize="none",
+                                                width="100%",
+                                                min_height="150px",
+                                                max_height="200px",
+                                                style={
+                                                    "font_size": "16px",
+                                                    "padding": "24px 100px 24px 32px",
+                                                    "border_radius": "20px",
+                                                    "border": rx.cond(
+                                                        State.is_dark_mode, "2px solid #4b5563", "2px solid #e5e7eb"
+                                                    ),
+                                                    "background": rx.cond(State.is_dark_mode, "#374151", "#ffffff"),
+                                                    "color": rx.cond(State.is_dark_mode, "#ffffff", "#111827"),
+                                                    "outline": "none",
+                                                    "font_family": "Inter, sans-serif",
+                                                    "font_weight": "400",
+                                                    "box_shadow": rx.cond(
+                                                        State.is_dark_mode,
+                                                        "0 4px 6px rgba(0, 0, 0, 0.3)",
+                                                        "0 4px 6px rgba(0, 0, 0, 0.05)",
+                                                    ),
+                                                    "word_wrap": "break-word",
+                                                    "white_space": "pre-wrap",
+                                                    "_focus": {
+                                                        "border_color": "#3b82f6",
+                                                        "box_shadow": "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                                                    },
+                                                    "::placeholder": {
+                                                        "color": rx.cond(State.is_dark_mode, "#ffffff", "#9ca3af"),
+                                                    },
+                                                },
+                                            ),
+                                            rx.button(
+                                                rx.icon("send", size=20),
+                                                on_click=State.send_message,
+                                                disabled=State.is_loading,
+                                                variant="solid",
+                                                style={
+                                                    "background": "#111827",
+                                                    "cursor": "pointer",
+                                                    "height": "50px",
+                                                    "width": "50px",
+                                                    "border_radius": "12px",
+                                                    "box_shadow": "0 2px 4px rgba(0, 0, 0, 0.1)",
+                                                    "border": "none",
+                                                    "position": "absolute",
+                                                    "right": "12px",
+                                                    "bottom": "12px",
+                                                    "top": "auto",
+                                                    "transform": "none",
+                                                    "_hover": {
+                                                        "background": "#374151",
+                                                        "transform": "scale(1.05)",
+                                                    },
+                                                    "_active": {
+                                                        "transform": "scale(0.95)",
+                                                    },
+                                                },
+                                            ),
+                                            spacing="0",
+                                            width="100%",
+                                            align="center",
+                                            position="relative",
                                         ),
+                                        width="100%",
+                                        max_width="900px",
                                     ),
-                                    rx.text(
-                                        State.connection_status,
-                                        font_size="12px",
-                                    ),
-                                    spacing="2",
+                                    spacing="0",
                                     align="center",
                                 ),
-                                variant="soft",
-                                color_scheme=rx.cond(
-                                    State.is_connected,
-                                    "green",
-                                    "gray",
-                                ),
+                                width="100%",
+                                margin_bottom="48px",
                             ),
-                            rx.button(
-                                rx.icon("trash-2", size=18),
-                                on_click=State.clear_messages,
-                                variant="ghost",
-                                color_scheme="gray",
-                                size="2",
-                            ),
-                            rx.color_mode.button(
-                                variant="ghost",
-                                color_scheme="gray",
-                                size="2",
-                            ),
-                            spacing="2",
+                            # 추천 질문들
+                            recommended_questions_section(),
+                            spacing="0",
+                            align="center",
                         ),
-                        justify="between",
-                        align="center",
                         width="100%",
+                        height="100%",
                     ),
-                    padding="20px",
-                    border_bottom="1px solid",
-                    border_color=rx.color("gray", 4),
-                    background=rx.color("gray", 1),
-                    width="100%",
-                ),
-                # 메시지 히스토리 영역
-                rx.box(
-                    rx.cond(
-                        State.messages.length() == 0,  # type: ignore
-                        rx.center(
-                            rx.vstack(
-                                rx.icon(
-                                    "message-circle",
-                                    size=48,
-                                    color=rx.color("gray", 8),
-                                ),
-                                rx.text(
-                                    "대화를 시작해보세요",
-                                    font_size="18px",
-                                    font_weight="600",
-                                    color=rx.color("gray", 11),
-                                ),
-                                rx.text(
-                                    "메시지를 입력하면 AI가 응답합니다",
-                                    font_size="14px",
-                                    color=rx.color("gray", 9),
-                                ),
-                                spacing="3",
-                                align="center",
+                    # 채팅 화면
+                    rx.box(
+                        rx.vstack(
+                            rx.foreach(
+                                State.messages,
+                                message_box,
+                            ),
+                            rx.cond(
+                                State.is_loading,
+                                typing_indicator(),
+                                rx.box(),
                             ),
                             width="100%",
-                            height="100%",
+                            spacing="0",
                         ),
-                        rx.box(
-                            rx.vstack(
-                                rx.foreach(
-                                    State.messages,
-                                    message_box,
-                                ),
-                                rx.cond(
-                                    State.is_loading,
-                                    typing_indicator(),
-                                    rx.box(),
-                                ),
-                                width="100%",
-                                spacing="0",
-                            ),
-                        ),
+                        flex="1",
+                        overflow_y="auto",
+                        padding="24px",
+                        background=rx.cond(State.is_dark_mode, "#1a1a1a", "#ffffff"),
+                        width="100%",
                     ),
-                    flex="1",
-                    overflow_y="auto",
-                    padding="20px",
-                    background=rx.color("gray", 2),
-                    width="100%",
                 ),
-                # 입력 영역
+                flex="1",
+                width="100%",
+            ),
+            # 하단 입력 영역 (메시지가 있을 때만 표시)
+            rx.cond(
+                State.messages.length() > 0,  # type: ignore
                 rx.box(
                     rx.vstack(
-                        recommended_questions_section(),
-                        rx.hstack(
-                            rx.text_area(
-                                placeholder="메시지를 입력하세요... (전송 버튼을 클릭하여 전송)",
-                                value=State.current_message,
-                                on_change=State.set_current_message,
-                                variant="soft",
-                                name="message_input",
-                                resize="none",
+                        # 입력 필드
+                        rx.box(
+                            rx.hstack(
+                                rx.text_area(
+                                    placeholder="What would you like to know?",
+                                    value=State.current_message,
+                                    on_change=State.set_current_message,
+                                    name="message_input",
+                                    resize="none",
+                                    width="100%",
+                                    min_height="60px",
+                                    max_height="120px",
+                                    style={
+                                        "font_size": "16px",
+                                        "padding": "16px 60px 16px 20px",
+                                        "border_radius": "12px",
+                                        "border": rx.cond(
+                                            State.is_dark_mode, "1px solid #4b5563", "1px solid #e5e7eb"
+                                        ),
+                                        "background": rx.cond(State.is_dark_mode, "#374151", "#ffffff"),
+                                        "color": rx.cond(State.is_dark_mode, "#ffffff", "#111827"),
+                                        "outline": "none",
+                                        "font_family": "Inter, sans-serif",
+                                        "font_weight": "400",
+                                        "box_shadow": rx.cond(
+                                            State.is_dark_mode,
+                                            "0 2px 4px rgba(0, 0, 0, 0.3)",
+                                            "0 2px 4px rgba(0, 0, 0, 0.05)",
+                                        ),
+                                        "_focus": {
+                                            "border_color": "#3b82f6",
+                                            "box_shadow": "0 0 0 2px rgba(59, 130, 246, 0.1)",
+                                        },
+                                        "::placeholder": {
+                                            "color": rx.cond(State.is_dark_mode, "#ffffff", "#9ca3af"),
+                                        },
+                                    },
+                                ),
+                                rx.button(
+                                    rx.icon("send", size=20),
+                                    on_click=State.send_message,
+                                    disabled=State.is_loading,
+                                    variant="solid",
+                                    style={
+                                        "background": "#111827",
+                                        "cursor": "pointer",
+                                        "height": "40px",
+                                        "width": "40px",
+                                        "border_radius": "8px",
+                                        "box_shadow": "0 2px 4px rgba(0, 0, 0, 0.1)",
+                                        "border": "none",
+                                        "position": "absolute",
+                                        "right": "10px",
+                                        "bottom": "10px",
+                                        "top": "auto",
+                                        "transform": "none",
+                                        "_hover": {
+                                            "background": "#374151",
+                                            "transform": "scale(1.05)",
+                                        },
+                                        "_active": {
+                                            "transform": "scale(0.95)",
+                                        },
+                                    },
+                                ),
+                                spacing="0",
                                 width="100%",
-                                min_height="100px",
-                                style={
-                                    "font_size": "16px",
-                                    "padding": "12px",
-                                },
+                                align="center",
+                                position="relative",
                             ),
-                            rx.button(
-                                rx.icon("send", size=24),
-                                on_click=State.send_message,
-                                disabled=State.is_loading,
-                                variant="solid",
-                                style={
-                                    "background": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                                    "cursor": "pointer",
-                                    "min_height": "100px",
-                                    "min_width": "80px",
-                                    "border_radius": "12px",
-                                    "box_shadow": "0 4px 12px rgba(102, 126, 234, 0.3)",
-                                    "_hover": {
-                                        "transform": "translateY(-2px)",
-                                        "box_shadow": "0 6px 16px rgba(102, 126, 234, 0.4)",
-                                    },
-                                    "_active": {
-                                        "transform": "translateY(0)",
-                                    },
-                                },
-                            ),
-                            spacing="3",
                             width="100%",
-                            align="end",
+                            max_width="800px",
                         ),
-                        spacing="3",
-                        width="100%",
+                        spacing="0",
+                        align="center",
                     ),
                     padding="24px",
-                    border_top="1px solid",
-                    border_color=rx.color("gray", 4),
-                    background=rx.color("gray", 1),
+                    background=rx.cond(State.is_dark_mode, "#1f2937", "#ffffff"),
+                    border_top=rx.cond(State.is_dark_mode, "1px solid #374151", "1px solid #f3f4f6"),
                     width="100%",
                 ),
-                spacing="0",
-                width="100%",
-                max_width="900px",
-                height="100vh",
-                box_shadow="0 0 60px rgba(0, 0, 0, 0.08)",
+                rx.box(),
             ),
+            spacing="0",
             width="100%",
             height="100vh",
         ),
         width="100%",
         min_height="100vh",
-        background=rx.color("gray", 3),
+        background=rx.cond(State.is_dark_mode, "#1a1a1a", "#ffffff"),
     )
 
 
@@ -527,6 +674,7 @@ app = rx.App(
     ],
     style={
         "font_family": "Inter, sans-serif",
+        "background_color": "#ffffff",
     },
 )
 
