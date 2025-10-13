@@ -9,8 +9,12 @@ from google.adk.tools.agent_tool import AgentTool
 
 from ..prompts.orchestrator_prompt import prompt
 from ..settings import settings
+from ..utils.adk_patches import suppress_a2a_experimental_warnings
 
 logging.getLogger("google_adk.google.adk.tools.base_authenticated_tool").setLevel(logging.ERROR)
+
+# google-adk marks its A2A bridge as experimental; unwrap decorators so we avoid log spam.
+suppress_a2a_experimental_warnings()
 
 audio_processing_agent = RemoteA2aAgent(
     name="audio_processing_agent",

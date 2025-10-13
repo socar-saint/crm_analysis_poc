@@ -5,7 +5,6 @@ from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill
 from core_common.logging import get_logger
-from google.adk.a2a.executor.a2a_agent_executor import A2aAgentExecutor
 from google.adk.agents import Agent
 from google.adk.artifacts import InMemoryArtifactService
 from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
@@ -13,8 +12,13 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 
 from ..settings import settings
+from .adk_patches import suppress_a2a_experimental_warnings
+from .progress_executor import ProgressAwareA2aAgentExecutor
 
 logger = get_logger(__name__)
+
+# Ensure google-adk A2A helpers are unwrapped before we instantiate executors.
+suppress_a2a_experimental_warnings()
 
 
 def create_agent_a2a_server(
@@ -63,7 +67,7 @@ def create_agent_a2a_server(
         session_service=InMemorySessionService(),
         memory_service=InMemoryMemoryService(),
     )
-    executor = A2aAgentExecutor(runner=runner)
+    executor = ProgressAwareA2aAgentExecutor(runner=runner)
 
     request_handler = DefaultRequestHandler(agent_executor=executor, task_store=InMemoryTaskStore())
 
