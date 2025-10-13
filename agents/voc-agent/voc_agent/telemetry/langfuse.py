@@ -1,7 +1,5 @@
 """Langfuse tracing helpers."""
 
-from __future__ import annotations
-
 import inspect
 import logging
 import os
@@ -14,21 +12,9 @@ from uuid import uuid4
 import litellm
 
 from ..settings import settings
+from ..utils import configure_langfuse_environment
 
 logger = logging.getLogger(__name__)
-
-
-def _configure_environment() -> None:
-    """Apply Langfuse related environment variables if they are missing."""
-
-    if settings.langfuse_host:
-        os.environ.setdefault("LANGFUSE_HOST", settings.langfuse_host)
-    if settings.langfuse_public_key:
-        os.environ.setdefault("LANGFUSE_PUBLIC_KEY", settings.langfuse_public_key)
-    if settings.langfuse_secret_key:
-        os.environ.setdefault("LANGFUSE_SECRET_KEY", settings.langfuse_secret_key)
-    if settings.langfuse_release:
-        os.environ.setdefault("LANGFUSE_RELEASE", settings.langfuse_release)
 
 
 @lru_cache(maxsize=1)
@@ -54,7 +40,7 @@ def configure_langfuse_tracing(tags: tuple[str, ...] | None = None) -> bool:
 
     _patch_langfuse_constructor()
 
-    _configure_environment()
+    configure_langfuse_environment()
 
     if "langfuse" not in litellm.callbacks:
         litellm.callbacks.append("langfuse")
@@ -108,7 +94,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
 
     Langfuse._litellm_compat_installed = True
 
-    trace_cache: OrderedDict[str, _CompatTrace] = OrderedDict()
+    trace_cache: OrderedDict[str, _CompatTrace] = OrderedDict()  # noqa: F821
 
     def _extract_usage_details(params: dict[str, Any]) -> dict[str, Any] | None:
         usage_details = params.get("usage_details")
@@ -174,14 +160,14 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
 
         return metadata, _collect_tags(metadata_tags)
 
-    def _store_trace(trace_id: str, trace: _CompatTrace) -> None:
+    def _store_trace(trace_id: str, trace: "_CompatTrace") -> None:
         trace_cache[trace_id] = trace
         trace_cache.move_to_end(trace_id)
         # Keep cache bounded to avoid unbounded growth
         if len(trace_cache) > 128:
             trace_cache.popitem(last=False)
 
-    def _get_trace(trace_id: str) -> _CompatTrace | None:
+    def _get_trace(trace_id: str) -> "_CompatTrace | None":
         trace = trace_cache.get(trace_id)
         if trace:
             trace_cache.move_to_end(trace_id)
@@ -194,7 +180,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
             self.id = generation_id
             self._ended = False
 
-        def update(self, **kwargs: Any) -> _CompatGeneration:
+        def update(self, **kwargs: Any) -> "_CompatGeneration":
             usage_details = _extract_usage_details(kwargs)
             self._observation.update(
                 input=kwargs.get("input"),
@@ -212,7 +198,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
             )
             return self
 
-        def end(self, *_args: Any, **kwargs: Any) -> _CompatGeneration:
+        def end(self, *_args: Any, **kwargs: Any) -> "_CompatGeneration":
             if self._ended:
                 return self
 
@@ -229,7 +215,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
             self._observation = observation
             self.trace_id = trace_id
 
-        def update(self, **kwargs: Any) -> _CompatSpan:
+        def update(self, **kwargs: Any) -> "_CompatSpan":
             self._observation.update(
                 input=kwargs.get("input"),
                 output=kwargs.get("output"),
@@ -240,7 +226,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
             )
             return self
 
-        def end(self, *_args: Any, **kwargs: Any) -> _CompatSpan:
+        def end(self, *_args: Any, **kwargs: Any) -> "_CompatSpan":
             end_time = kwargs.pop("end_time", None) or kwargs.pop("endTime", None)
             try:
                 self._observation.end(end_time=end_time)
@@ -248,7 +234,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
                 self._observation.end()
             return self
 
-        def generation(self, **kwargs: Any) -> _CompatGeneration:
+        def generation(self, **kwargs: Any) -> "_CompatGeneration":
             usage_details = _extract_usage_details(kwargs)
             observation = self._observation.start_observation(
                 name=kwargs.get("name") or "litellm-generation",
@@ -268,7 +254,7 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
             )
             return _CompatGeneration(self.trace_id, observation, kwargs.get("id"))
 
-        def span(self, **kwargs: Any) -> _CompatSpan:
+        def span(self, **kwargs: Any) -> "_CompatSpan":
             observation = self._observation.start_observation(
                 name=kwargs.get("name") or "litellm-span",
                 as_type="span",
@@ -385,26 +371,26 @@ def _patch_langfuse_constructor() -> None:  # noqa: C901
             self.trace_id = trace_id
             self.id: str | None = None
 
-        def update(self, **_: Any) -> _NoopGeneration:
+        def update(self, **_: Any) -> "_NoopGeneration":
             return self
 
-        def end(self, *_args: Any, **kwargs: Any) -> _NoopGeneration:
+        def end(self, *_args: Any, **kwargs: Any) -> "_NoopGeneration":
             return self
 
     class _NoopSpan:
         def __init__(self, trace_id: str):
             self.trace_id = trace_id
 
-        def update(self, **_: Any) -> _NoopSpan:
+        def update(self, **_: Any) -> "_NoopSpan":
             return self
 
-        def end(self, *_args: Any, **kwargs: Any) -> _NoopSpan:
+        def end(self, *_args: Any, **kwargs: Any) -> "_NoopSpan":
             return self
 
-        def generation(self, **_: Any) -> _NoopGeneration:
+        def generation(self, **_: Any) -> "_NoopGeneration":
             return _NoopGeneration(self.trace_id)
 
-        def span(self, **_: Any) -> _NoopSpan:
+        def span(self, **_: Any) -> "_NoopSpan":
             return _NoopSpan(self.trace_id)
 
     class _NoopTrace:

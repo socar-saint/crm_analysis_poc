@@ -7,7 +7,7 @@ from google.adk.agents.remote_a2a_agent import AGENT_CARD_WELL_KNOWN_PATH, Remot
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.agent_tool import AgentTool
 
-from ..prompts.orchestrator_prompt import ORCHESTRATOR_PROMPT
+from ..prompts.orchestrator_prompt import prompt
 from ..settings import settings
 
 logging.getLogger("google_adk.google.adk.tools.base_authenticated_tool").setLevel(logging.ERROR)
@@ -41,9 +41,7 @@ LLM_MODEL = LiteLlm(model=f"azure/{AZURE_DEPLOYMENT}")
 orchestrator_agent = LlmAgent(
     name="orchestrator",
     model=LLM_MODEL,
-    instruction=ORCHESTRATOR_PROMPT,
-    tools=[
-        audio_processing_agent_tool,
-        consultation_analysis_agent_tool,
-    ],
+    instruction=prompt.prompt,
+    tools=[audio_processing_agent_tool, consultation_analysis_agent_tool],
+    **prompt.config,
 )

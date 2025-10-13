@@ -5,7 +5,7 @@ from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.mcp_tool.mcp_session_manager import SseConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 
-from ..prompts.audio_processing_prompt import AUDIO_PROCESSING_PROMPT
+from ..prompts.audio_processing_prompt import prompt
 from ..settings import settings
 
 LLM_MODEL = LiteLlm(model=f"azure/{settings.azure_openai_deployment}")
@@ -17,7 +17,8 @@ AUDIO_PROCESSING_MCP = MCPToolset(
 audio_processing_agent = LlmAgent(
     name="audio_processing_agent",
     model=LLM_MODEL,
-    instruction=AUDIO_PROCESSING_PROMPT,
+    instruction=prompt.prompt,
+    **prompt.config,
     tools=[
         AUDIO_PROCESSING_MCP,
     ],
