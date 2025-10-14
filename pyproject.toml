@@ -5,13 +5,18 @@ description = "AI Agent Platform - Monorepo for AI agents and MCP servers"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "voc-agent",
+    "voc-server",
+    "ai-common",
+    "ui-for-simple-test",
 ]
 
 [tool.uv.workspace]
 members = [
-    "agents/*",
-    "mcp-servers/*",
-    "packages/*"
+    "agents/voc-agent",
+    "mcp-servers/voc-server",
+    "packages/common",
+    "packages/ui-for-simple-test",
 ]
 
 [tool.uv]
@@ -31,6 +36,13 @@ dev-dependencies = [
     "types-pyyaml>=6.0.12.20250516",
     "safety>=3.0.0",
 ]
+
+[tool.uv.sources]
+voc-agent = { workspace = true }
+voc-server = { workspace = true }
+ai-common = { workspace = true }
+ui-for-simple-test = { workspace = true }
+
 
 [tool.black]
 line-length = 119
