@@ -119,7 +119,7 @@ services:
     environment:
       ORCHESTRATOR_HOST: orchestrator
       ORCHESTRATOR_PORT: 10000
-      RECOMMENDED_QUESTIONS: "다음 파일을 분석하고 어떤 내용인지 요약해줘 s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=9/day=30/hour=0/conversation_id=013ffdc0-9c56-4222-9463-818666f19cae/, 쏘카가 뭐야?, AI Agent 프로젝트를 소개해줘., 쏘카에서 사용하는 기술 스택은 뭐야?, 피글렛은 실망했다."
+      RECOMMENDED_QUESTIONS: "다음 파일을 분석하고 어떤 내용인지 요약해줘 s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=10/day=12/hour=14/conversation_id=0486ba65-af6a-44ed-8d09-324742ed6d10/, 쏘카가 뭐야?, AI Agent 프로젝트를 소개해줘., 쏘카에서 사용하는 기술 스택은 뭐야?, 피글렛은 실망했다."
     ports:
       - "3000:3000"
       - "8000:8000"
