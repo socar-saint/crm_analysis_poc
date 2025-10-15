@@ -5,6 +5,7 @@ import logging
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.agents.remote_a2a_agent import AGENT_CARD_WELL_KNOWN_PATH, RemoteA2aAgent
 from google.adk.models.lite_llm import LiteLlm
+from google.adk.tools import load_memory
 from google.adk.tools.agent_tool import AgentTool
 
 from ..prompts.orchestrator_prompt import prompt
@@ -42,10 +43,23 @@ consultation_analysis_agent_tool = AgentTool(consultation_analysis_agent)
 AZURE_DEPLOYMENT = settings.azure_openai_deployment
 LLM_MODEL = LiteLlm(model=f"azure/{AZURE_DEPLOYMENT}")
 
+
+async def auto_save_session_to_memory_callback(callback_context):  # type: ignore
+    """세션을 메모리에 저장하는 콜백."""
+    await callback_context._invocation_context.memory_service.add_session_to_memory(
+        callback_context._invocation_context.session
+    )
+
+
 orchestrator_agent = LlmAgent(
     name="orchestrator",
     model=LLM_MODEL,
     instruction=prompt.prompt,
-    tools=[audio_processing_agent_tool, consultation_analysis_agent_tool],
+    tools=[
+        audio_processing_agent_tool,
+        consultation_analysis_agent_tool,
+        load_memory,
+    ],
+    after_agent_callback=auto_save_session_to_memory_callback,
     **prompt.config,
 )

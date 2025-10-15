@@ -34,7 +34,7 @@ def _normalise_task_payload(value: Any) -> Any:
     return value
 
 
-async def _stream_single_turn_request(message: str, agent_url: str) -> AsyncIterator[Any]:
+async def _stream_single_turn_request(message: str, agent_url: str, session_id: str | None) -> AsyncIterator[Any]:
     """Yield task snapshots as they stream back from the orchestrator."""
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(1200)) as httpx_client:
@@ -75,6 +75,7 @@ async def _stream_single_turn_request(message: str, agent_url: str) -> AsyncIter
             message_id=str(uuid4()),
             role=Role.user,
             parts=[TextPart(text=message)],
+            context_id=session_id,
         )
 
         result = client.send_message(request)
@@ -403,6 +404,9 @@ class State(ReflexState):
     # 현재 실행 중인 태스크 (직렬화 가능한 형태로 저장)
     current_task_data: dict[str, Any] | None = None
 
+    # 현재 세션 ID
+    session_id: str | None = None
+
     def set_current_message(self, message: str) -> None:
         """현재 메시지를 설정합니다."""
         self.current_message = message
@@ -426,7 +430,7 @@ class State(ReflexState):
 
         task: Any | None = None
         try:
-            async for snapshot in _stream_single_turn_request(user_message, self.agent_url):
+            async for snapshot in _stream_single_turn_request(user_message, self.agent_url, self.session_id):
                 if self._handle_snapshot_update(snapshot):
                     yield
 
@@ -484,6 +488,11 @@ class State(ReflexState):
         updated = False
         if snapshot is not None:
             self.current_task_data = {"task": snapshot}
+            context_id = (
+                snapshot.get("context_id") if isinstance(snapshot, dict) else getattr(snapshot, "context_id", None)
+            )
+            if context_id and self.session_id is None:
+                self.session_id = context_id
             updated = True
 
         logs = _extract_process_logs(snapshot)
@@ -559,6 +568,7 @@ class State(ReflexState):
         self.process_logs_collapsed = False
         self.process_logs_expiration = None
         self.current_task_data = None
+        self.session_id = None
 
     def toggle_dark_mode(self) -> None:
         """다크모드를 토글합니다."""
