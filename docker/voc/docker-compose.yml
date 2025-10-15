@@ -17,15 +17,11 @@ services:
     environment:
       <<: *aws_env
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
-      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
-      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
-      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "9000:9000"
     volumes:
       - ../docker-volume:/app/downloads
+      - ../../.env:/app/.env:ro
     restart: unless-stopped
 
   audio-processing:
@@ -33,7 +29,7 @@ services:
       context: ../..
       dockerfile: docker/voc/agent.Dockerfile
     image: audio-processing-agent:latest
-    command: ["python", "-m", "voc_agent.audio_processing.__main__"]
+    command: ["sh", "-c", "set -a && . /app/.env && set +a && python -m voc_agent.audio_processing.__main__"]
     env_file:
       - ../../.env
     environment:
@@ -43,14 +39,16 @@ services:
       AUDIO_PROCESSING_PUBLIC_HOST: audio-processing
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
       LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
       STT_MCP_SSE_URL: http://mcp-server:9000/sse
 
     ports:
       - "10001:10001"
+    volumes:
+      - ../../.env:/app/.env:ro
     restart: unless-stopped
     depends_on:
       - mcp-server
@@ -58,7 +56,7 @@ services:
   consultation-analysis:
     build: *agent-build
     image: consultation-analysis-agent:latest
-    command: ["python", "-m", "voc_agent.consultation_analysis.__main__"]
+    command: ["sh", "-c", "set -a && . /app/.env && set +a && python -m voc_agent.consultation_analysis.__main__"]
     env_file:
       - ../../.env
     environment:
@@ -68,12 +66,14 @@ services:
       CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
       LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "10002:10002"
+    volumes:
+      - ../../.env:/app/.env:ro
     restart: unless-stopped
     depends_on:
       - mcp-server
@@ -81,7 +81,7 @@ services:
   orchestrator:
     build: *agent-build
     image: orchestrator-agent:latest
-    command: ["python", "-m", "voc_agent.orchestrator.__main__"]
+    command: ["sh", "-c", "set -a && . /app/.env && set +a && python -m voc_agent.orchestrator.__main__"]
     env_file:
       - ../../.env
     environment:
@@ -97,12 +97,14 @@ services:
       CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-61926387-e627-441a-8071-613c4452e186}
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-bb05995e-10ef-4db2-b253-b7a99d100f06}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
       LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
     ports:
       - "10000:10000"
+    volumes:
+      - ../../.env:/app/.env:ro
     restart: unless-stopped
     depends_on:
       - mcp-server

@@ -33,6 +33,8 @@ COPY --from=builder /app/packages/common /app/packages/common
 COPY --from=builder /app/pyproject.toml /app/pyproject.toml
 COPY --from=builder /app/uv.lock /app/uv.lock
 
+# .env file will be mounted as volume in docker-compose
+
 EXPOSE 10000 10001
 
 # Default to running the orchestration service; override in compose for other entrypoints
