@@ -9,6 +9,8 @@ dependencies = [
     "voc-server",
     "ai-common",
     "ui-for-simple-test",
+    "chat-analysis-agent",
+    "chat-analysis-mcp-server",
 ]
 
 [tool.uv.workspace]
@@ -17,6 +19,8 @@ members = [
     "mcp-servers/voc-server",
     "packages/common",
     "packages/ui-for-simple-test",
+    "agents/chat-analysis-agent",
+    "mcp-servers/chat-analysis-mcp-server",
 ]
 
 [tool.uv]
@@ -42,7 +46,8 @@ voc-agent = { workspace = true }
 voc-server = { workspace = true }
 ai-common = { workspace = true }
 ui-for-simple-test = { workspace = true }
-
+chat-analysis-agent = { workspace = true }
+chat-analysis-mcp-server = { workspace = true }
 
 [tool.black]
 line-length = 119

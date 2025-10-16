@@ -1,0 +1,116 @@
+services:
+  orchestration-agent:
+    build:
+      context: ../..
+      dockerfile: docker/chat-analysis/agent.Dockerfile
+    ports:
+      - "10000:10000"
+    env_file:
+      - ../../agents/chat-analysis-agent/.env
+    environment:
+      ORCHESTRATOR_AGENT_PUBLIC_HOST: orchestration-agent
+      ORCHESTRATOR_AGENT_PUBLIC_PORT: 10000
+      SATISFACTION_EVALUATION_AGENT_URL: http://satisfaction-evaluation-agent:10001
+      CONVERSATION_SUMMARY_AGENT_URL: http://conversation-summary-agent:10002
+      PROBLEM_RESOLUTION_AGENT_URL: http://problem-resolution-agent:10003
+      PII_MASKING_SERVER_URL: http://mcp-server:50000
+    command:
+      - sh
+      - -c
+      - "cd agents/chat-analysis-agent && python -m chat_analysis_agent.orchestration.orchestration_server"
+    depends_on:
+      - satisfaction-evaluation-agent
+      - conversation-summary-agent
+      - problem-resolution-agent
+    volumes:
+      - /Users/serena/Downloads/chat_sample.csv:/app/samples/security_concern.csv
+    networks:
+      - chat-analysis-network
+
+  satisfaction-evaluation-agent:
+    build:
+      context: ../..
+      dockerfile: docker/chat-analysis/agent.Dockerfile
+    ports:
+      - "10001:10001"
+    env_file:
+      - ../../agents/chat-analysis-agent/.env
+    environment:
+      SATISFACTION_EVALUATION_AGENT_PUBLIC_HOST: satisfaction-evaluation-agent
+      SATISFACTION_EVALUATION_AGENT_PUBLIC_PORT: 10001
+    command:
+      - sh
+      - -c
+      - "cd agents/chat-analysis-agent && python -m chat_analysis_agent.satisfaction_evaluation.satisfaction_evaluation_server"
+    networks:
+      - chat-analysis-network
+
+  conversation-summary-agent:
+    build:
+      context: ../..
+      dockerfile: docker/chat-analysis/agent.Dockerfile
+    ports:
+      - "10002:10002"
+    env_file:
+      - ../../agents/chat-analysis-agent/.env
+    environment:
+      CONVERSATION_SUMMARY_AGENT_PUBLIC_HOST: conversation-summary-agent
+      CONVERSATION_SUMMARY_AGENT_PUBLIC_PORT: 10002
+    command:
+      - sh
+      - -c
+      - "cd agents/chat-analysis-agent && python -m chat_analysis_agent.conversation_summary.conversation_summary_server"
+    networks:
+      - chat-analysis-network
+
+  problem-resolution-agent:
+    build:
+      context: ../..
+      dockerfile: docker/chat-analysis/agent.Dockerfile
+    ports:
+      - "10003:10003"
+    env_file:
+      - ../../agents/chat-analysis-agent/.env
+    environment:
+      PROBLEM_RESOLUTION_AGENT_PUBLIC_HOST: problem-resolution-agent
+      PROBLEM_RESOLUTION_AGENT_PUBLIC_PORT: 10003
+    command:
+      - sh
+      - -c
+      - "cd agents/chat-analysis-agent && python -m chat_analysis_agent.problem_resolution.problem_resolution_server"
+    networks:
+      - chat-analysis-network
+
+  mcp-server:
+    build:
+      context: ../..
+      dockerfile: docker/chat-analysis/server.Dockerfile
+    ports:
+      - "50000:50000"
+    command:
+      - sh
+      - -c
+      - "cd mcp-servers/chat-analysis-mcp-server && python -m chat_analysis_mcp_server.pii_masking.server"
+    networks:
+      - chat-analysis-network
+
+  ui:
+    build:
+      context: ../..
+      dockerfile: docker/ui-for-simple-test.Dockerfile
+    environment:
+      ORCHESTRATOR_HOST: orchestration-agent
+      ORCHESTRATOR_PORT: 10000
+      RECOMMENDED_QUESTIONS: "다음 파일을 읽어서 사용자가 상담에 대한 만족도가 만족/불만족 중 어디에 가까운지 평가해줘. 파일 이름: /app/samples/security_concern.csv"
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - orchestration-agent
+    networks:
+      - chat-analysis-network
+
+networks:
+  chat-analysis-network:
+    driver: bridge
