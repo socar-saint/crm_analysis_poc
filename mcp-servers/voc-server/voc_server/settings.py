@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     azure_openai_transcribe_deployment: str = Field(default="", min_length=1)
     azure_openai_api_version: str = Field(default="2024-12-01-preview")
 
+    # Database 설정
+    database_url: str = Field(default="sqlite:///./voc_server.db", min_length=1)
+    database_echo: bool = Field(default=False)
+
 
 # 설정 인스턴스 생성
 settings = Settings()

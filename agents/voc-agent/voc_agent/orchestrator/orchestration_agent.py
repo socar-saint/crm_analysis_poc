@@ -39,6 +39,14 @@ consultation_analysis_agent = RemoteA2aAgent(
 
 consultation_analysis_agent_tool = AgentTool(consultation_analysis_agent)
 
+data_handler_agent = RemoteA2aAgent(
+    name="data_handler_agent",
+    description="Persist consultation analytics into the VOC database using MCP-backed tooling",
+    agent_card=f"{settings.data_handler_base_url}/{AGENT_CARD_WELL_KNOWN_PATH}",
+)
+
+data_handler_agent_tool = AgentTool(data_handler_agent)
+
 # Azure OpenAI 배포명(Deployment name)으로 LiteLlm 구성
 AZURE_DEPLOYMENT = settings.azure_openai_deployment
 LLM_MODEL = LiteLlm(model=f"azure/{AZURE_DEPLOYMENT}")
@@ -58,6 +66,7 @@ orchestrator_agent = LlmAgent(
     tools=[
         audio_processing_agent_tool,
         consultation_analysis_agent_tool,
+        data_handler_agent_tool,
         load_memory,
     ],
     after_agent_callback=auto_save_session_to_memory_callback,

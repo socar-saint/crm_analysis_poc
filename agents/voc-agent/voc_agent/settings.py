@@ -64,6 +64,19 @@ class Settings(BaseSettings):
         validation_alias="CONSULTATION_ANALYSIS_PUBLIC_HOST",
     )
 
+    data_handler_host: str = Field(
+        default="0.0.0.0",  # nosec
+        validation_alias="DATA_HANDLER_HOST",
+    )
+    data_handler_port: int = Field(
+        default=10003,
+        validation_alias="DATA_HANDLER_PORT",
+    )
+    data_handler_public_host: str = Field(
+        default="localhost",
+        validation_alias="DATA_HANDLER_PUBLIC_HOST",
+    )
+
     stt_mcp_sse_url: str = Field(default="http://localhost:9000/sse")
 
     # Langfuse tracing
@@ -90,6 +103,11 @@ class Settings(BaseSettings):
     def consultation_analysis_base_url(self) -> str:
         """상담 분석 서버 URL (클라이언트 연결용)"""
         return f"http://{self.consultation_analysis_public_host}:{self.consultation_analysis_port}"
+
+    @property
+    def data_handler_base_url(self) -> str:
+        """데이터 핸들러 서버 URL (클라이언트 연결용)"""
+        return f"http://{self.data_handler_public_host}:{self.data_handler_port}"
 
     # Backward compatibility helpers (deprecated diarization terminology)
     @property

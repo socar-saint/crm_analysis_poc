@@ -1,5 +1,7 @@
 """Server."""
 
+from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
@@ -8,12 +10,16 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from .audiofile_tools import opus2wav
+from .database import init_db, session_scope
+from .models import FeedbackRecord, FeedbackRecordRead, InsertFeedbackPayload
 from .pi_masking import mask_pii
 from .s3_download import download_s3_prefix
 from .transcribe_tools import azure_gpt_transcribe
 from .wav_diarization import diarize_stereo_wav
 
 mcp = FastMCP("STT Server", host="0.0.0.0", port=9000)  # nosec
+
+init_db()
 
 
 @mcp.tool(description="Masking private information contained in context")
@@ -114,6 +120,133 @@ def s3_download_tool(s3_uri: str) -> dict[str, Any]:
     result = download_s3_prefix(s3_uri)
     logging.info("[s3_download] 결과=%s", result)
     return result
+
+
+@mcp.tool(description="STT 텍스트, 요약, 카테고리, 화남 지표를 데이터베이스에 저장합니다.")
+def insert_feedback_tool(payload: InsertFeedbackPayload) -> dict[str, Any]:
+    """Validate payload with Pydantic/SQLModel and persist it to the database."""
+    logging.info("[insert_feedback] payload=%s", payload)
+
+    provided_fields = sorted(payload.model_dump(exclude_none=True).keys())
+    logging.info("[insert_feedback] 입력 필드=%s", provided_fields)
+
+    try:
+        transcript_text = _resolve_transcript_text(payload)
+    except ValueError as exc:
+        logging.warning("[insert_feedback] transcript resolution failed: %s", exc)
+        return {
+            "status": "error",
+            "error": str(exc),
+        }
+
+    feedback = FeedbackRecord(
+        transcript_text=transcript_text,
+        summary=payload.summary,
+        category=payload.category,
+        anger_level=payload.anger_level,
+    )
+
+    with session_scope() as session:
+        session.add(feedback)
+        session.flush()
+        session.refresh(feedback)
+
+        stored = FeedbackRecordRead.model_validate(feedback)
+        logging.info("[insert_feedback] stored id=%s", stored.id)
+        return {
+            "status": "ok",
+            "record": stored.model_dump(mode="json"),
+        }
+
+
+def _resolve_transcript_text(payload: InsertFeedbackPayload) -> str:
+    """Return the full transcript text, loading from file when necessary."""
+
+    summary_text = (payload.summary or "").strip()
+
+    if payload.transcript_file:
+        return _load_transcript_from_file(payload.transcript_file)
+
+    candidates = _collect_transcript_candidates(payload)
+    if not candidates:
+        msg = "transcript_text or transcript_file must be provided"
+        raise ValueError(msg)
+
+    return _choose_transcript_from_candidates(candidates, summary_text)
+
+
+def _collect_transcript_candidates(payload: InsertFeedbackPayload) -> list[str]:
+    """Gather possible transcript text fields from payload extras."""
+
+    candidates: list[str] = []
+
+    def _add(value: Any) -> None:
+        text = _normalize_candidate(value)
+        if text:
+            candidates.append(text)
+
+    _add(payload.transcript_text)
+
+    extras = getattr(payload, "model_extra", {}) or {}
+    for key in ("text", "transcript", "full_transcript", "stt_text", "transcribed_text"):
+        _add(extras.get(key))
+
+    candidates.sort(key=len, reverse=True)
+    return candidates
+
+
+def _normalize_candidate(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    return text or None
+
+
+def _choose_transcript_from_candidates(candidates: list[str], summary_text: str) -> str:
+    best = candidates[0]
+    if not summary_text or best != summary_text:
+        return best
+
+    for candidate in candidates[1:]:
+        if candidate != summary_text:
+            return candidate
+
+    msg = (
+        "transcript_text appears to contain only the summary. "
+        "Provide transcript_file pointing to the saved transcription JSON for full text."
+    )
+    raise ValueError(msg)
+
+
+def _load_transcript_from_file(path_str: str) -> str:
+    """Load transcript text from the saved transcription JSON file."""
+
+    path = Path(path_str).expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    if not path.exists():
+        msg = f"transcript_file not found: {path}"
+        raise ValueError(msg)
+    try:
+        with path.open("r", encoding="utf-8") as fp:
+            data = json.load(fp)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        msg = f"failed to load transcript_file {path}: {exc}"
+        raise ValueError(msg) from exc
+
+    text = ""
+    if isinstance(data, dict):
+        text = str(data.get("text") or "").strip()
+        if not text and "segments" in data:
+            segments = data.get("segments") or []
+            if isinstance(segments, list):
+                text = " ".join(str(item.get("text") or "").strip() for item in segments if isinstance(item, dict))
+
+    if text:
+        return text
+
+    msg = f"transcript_file {path} did not contain usable text"
+    raise ValueError(msg)
 
 
 # Main entry point with graceful shutdown handling

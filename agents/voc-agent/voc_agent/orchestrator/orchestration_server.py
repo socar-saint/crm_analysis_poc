@@ -9,18 +9,22 @@ from .orchestration_agent import orchestrator_agent
 ORCHESTRATOR_SKILL = AgentSkill(
     id="stt_orchestrator",
     name="VOC Analysis Pipeline Agent",
-    description="Orchestrate STT processes from converting opus format to wav to diarize the given conversation",
-    tags=["opus", "wav", "stt", "diarization"],
+    description=(
+        "Coordinate audio conversion, diarization, consultation analysis, and persistence of structured results."
+    ),
+    tags=["opus", "wav", "stt", "diarization", "analysis", "storage"],
     examples=[
-        "Convert the given voice file into diarized text without masking private information.",
-        "Convert the given voice file into diarized text masking private information.",
+        "Process this call from download to persistent storage with diarized, masked transcripts.",
+        "Analyze the consultation and store the summary, category, and anger score in the database.",
     ],
 )
 
 app = create_agent_a2a_server(
     agent=orchestrator_agent,
     name="VOC Analysis Pipeline Agent",
-    description="Orchestrate STT processes from converting opus format to wav to diarize the given conversation",
+    description=(
+        "Coordinate audio conversion, diarization, consultation analysis, and persistence of structured results."
+    ),
     skills=[ORCHESTRATOR_SKILL],
     host=settings.orchestrator_host,
     port=settings.orchestrator_port,

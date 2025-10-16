@@ -7,6 +7,23 @@ x-aws-env: &aws_env
   AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-}
 
 services:
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    env_file:
+      - ../../.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-voc}
+      MYSQL_USER: ${MYSQL_USER:-voc}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+      TZ: ${MYSQL_TZ:-UTC}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+
   mcp-server:
     build:
       context: ../..
@@ -17,12 +34,16 @@ services:
     environment:
       <<: *aws_env
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://${MYSQL_USER:-voc}:${MYSQL_PASSWORD:-changeme}@mysql:3306/${MYSQL_DATABASE:-voc}}
+      DATABASE_ECHO: ${DATABASE_ECHO:-false}
     ports:
       - "9000:9000"
     volumes:
       - ../docker-volume:/app/downloads
       - ../../.env:/app/.env:ro
     restart: unless-stopped
+    depends_on:
+      - mysql
 
   audio-processing:
     build: &agent-build
@@ -78,6 +99,32 @@ services:
     depends_on:
       - mcp-server
 
+  data-handler:
+    build: *agent-build
+    image: data-handler-agent:latest
+    command: ["sh", "-c", "set -a && . /app/.env && set +a && python -m voc_agent.data_handler.__main__"]
+    env_file:
+      - ../../.env
+    environment:
+      <<: *aws_env
+      DATA_HANDLER_HOST: 0.0.0.0
+      DATA_HANDLER_PORT: 10003
+      DATA_HANDLER_PUBLIC_HOST: data-handler
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_RELEASE: ${LANGFUSE_RELEASE:-}
+      LANGFUSE_ENVIRONMENT: ${LANGFUSE_ENVIRONMENT:-}
+      STT_MCP_SSE_URL: http://mcp-server:9000/sse
+    ports:
+      - "10003:10003"
+    volumes:
+      - ../../.env:/app/.env:ro
+    restart: unless-stopped
+    depends_on:
+      - mcp-server
+
   orchestrator:
     build: *agent-build
     image: orchestrator-agent:latest
@@ -95,6 +142,9 @@ services:
       CONSULTATION_ANALYSIS_HOST: consultation-analysis
       CONSULTATION_ANALYSIS_PORT: 10002
       CONSULTATION_ANALYSIS_PUBLIC_HOST: consultation-analysis
+      DATA_HANDLER_HOST: data-handler
+      DATA_HANDLER_PORT: 10003
+      DATA_HANDLER_PUBLIC_HOST: data-handler
       AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-12-01-preview}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.data.socar.me}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
@@ -110,6 +160,7 @@ services:
       - mcp-server
       - audio-processing
       - consultation-analysis
+      - data-handler
 
   ui-for-simple-test:
     build:
@@ -121,7 +172,7 @@ services:
     environment:
       ORCHESTRATOR_HOST: orchestrator
       ORCHESTRATOR_PORT: 10000
-      RECOMMENDED_QUESTIONS: "다음 파일을 분석하고 어떤 내용인지 요약해줘 s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=10/day=12/hour=14/conversation_id=0486ba65-af6a-44ed-8d09-324742ed6d10/, 쏘카가 뭐야?, AI Agent 프로젝트를 소개해줘., 쏘카에서 사용하는 기술 스택은 뭐야?, 피글렛은 실망했다."
+      RECOMMENDED_QUESTIONS: "다음 파일을 분석하고 어떤 내용인지 요약해줘 s3://socar-ai-aicc-audio-prod/47619241-161a-41a6-b69a-486da84815dc/year=2025/month=10/day=14/hour=11/conversation_id=00378f30-efd9-43e1-9598-46090b8b0e4a/, 쏘카가 뭐야?, AI Agent 프로젝트를 소개해줘., 쏘카에서 사용하는 기술 스택은 뭐야?, 피글렛은 실망했다."
     ports:
       - "3000:3000"
       - "8000:8000"
@@ -132,3 +183,5 @@ services:
 networks:
   default:
     name: voc-net
+volumes:
+  mysql-data:
