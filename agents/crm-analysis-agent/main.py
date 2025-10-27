@@ -68,7 +68,7 @@ logger = get_logger(__name__)
 # =============================================================================
 
 # CSV 파일 경로 (모든 함수에서 공통으로 사용)
-DEFAULT_CSV_FILE = "/Users/saint/ai-agent-platform/agents/crm-analysis-agent/data/raw/251014_claned_Sales_TF_분석.csv"
+DEFAULT_CSV_FILE = "/Users/saint/ai-agent-platform/agents/crm-analysis-agent/data/raw/251022_until_251017/251022_Sales_TF_분석.csv"
 
 # =============================================================================
 # 글로벌 Context 변수 (Agent 간 공유) - 기존 AnalysisContext 활용
