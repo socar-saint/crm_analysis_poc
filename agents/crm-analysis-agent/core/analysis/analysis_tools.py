@@ -1571,27 +1571,28 @@ def prepare_funnel_quantile_data(csv_file_path: str) -> str:
         df['ctrl_rate'] = df['대조군_1일이내_예약생성'] / df['대조군_발송']
         df['lift'] = df['exp_rate'] - df['ctrl_rate']
         
-        # 퍼널별 통계 계산
+        # 퍼널별 통계 계산 (전체 전환율 기준)
         funnel_stats = df.groupby('퍼널').agg({
-            'lift': ['mean', 'count'],
-            'exp_rate': 'mean',
-            'ctrl_rate': 'mean',
             '실험군_1일이내_예약생성': 'sum',
-            '실험군_발송': 'sum'
-        }).round(4)
+            '실험군_발송': 'sum',
+            '대조군_1일이내_예약생성': 'sum',
+            '대조군_발송': 'sum'
+        }).reset_index()
         
-        # 컬럼명 정리
-        funnel_stats.columns = ['lift_mean', 'campaign_count', 'exp_rate_mean', 'ctrl_rate_mean', 'conversions', 'sent']
-        funnel_stats = funnel_stats.reset_index()
+        # 퍼널별 전체 전환율 및 Lift 계산
+        funnel_stats['exp_rate'] = funnel_stats['실험군_1일이내_예약생성'] / funnel_stats['실험군_발송']
+        funnel_stats['ctrl_rate'] = funnel_stats['대조군_1일이내_예약생성'] / funnel_stats['대조군_발송']
+        funnel_stats['lift'] = funnel_stats['exp_rate'] - funnel_stats['ctrl_rate']
+        funnel_stats['campaign_count'] = df.groupby('퍼널').size().reset_index(name='count')['count']
         
-        # 3분위수 기준 계산
-        q33 = funnel_stats['lift_mean'].quantile(0.33)
-        q67 = funnel_stats['lift_mean'].quantile(0.67)
+        # 3분위수 기준 계산 (퍼널별 전체 Lift 기준)
+        q33 = funnel_stats['lift'].quantile(0.33)
+        q67 = funnel_stats['lift'].quantile(0.67)
         
         # 그룹별 분류
-        high_group = funnel_stats[funnel_stats['lift_mean'] >= q67].copy()
-        medium_group = funnel_stats[(funnel_stats['lift_mean'] >= q33) & (funnel_stats['lift_mean'] < q67)].copy()
-        low_group = funnel_stats[funnel_stats['lift_mean'] < q33].copy()
+        high_group = funnel_stats[funnel_stats['lift'] >= q67].copy()
+        medium_group = funnel_stats[(funnel_stats['lift'] >= q33) & (funnel_stats['lift'] < q67)].copy()
+        low_group = funnel_stats[funnel_stats['lift'] < q33].copy()
         
         # 각 그룹별 상세 데이터 준비
         def prepare_group_data(group_df, group_name):
@@ -1610,9 +1611,9 @@ def prepare_funnel_quantile_data(csv_file_path: str) -> str:
                 
                 funnel_info = {
                     "funnel": funnel,
-                    "lift": round(row['lift_mean'] * 100, 2),
-                    "exp_rate": round(row['exp_rate_mean'] * 100, 2),
-                    "ctrl_rate": round(row['ctrl_rate_mean'] * 100, 2),
+                    "lift": round(row['lift'] * 100, 2),
+                    "exp_rate": round(row['exp_rate'] * 100, 2),
+                    "ctrl_rate": round(row['ctrl_rate'] * 100, 2),
                     "campaign_count": int(row['campaign_count']),
                     "top_messages": []
                 }
@@ -1621,9 +1622,9 @@ def prepare_funnel_quantile_data(csv_file_path: str) -> str:
                     message_text = str(msg_row['문구'])
                     message_data = {
                         "message": message_text,
-                        "lift": round(msg_row['lift'] * 100, 2),
-                        "exp_rate": round(msg_row['exp_rate'] * 100, 2),
-                        "ctrl_rate": round(msg_row['ctrl_rate'] * 100, 2)
+                        "lift": round(msg_row['lift'] * 100, 2),  # 개별 문구의 Lift 사용
+                        "exp_rate": round(msg_row['exp_rate'] * 100, 2),  # 개별 문구의 실험군 전환율 사용
+                        "ctrl_rate": round(msg_row['ctrl_rate'] * 100, 2)  # 개별 문구의 대조군 전환율 사용
                     }
                     funnel_info["top_messages"].append(message_data)
                     group_data["all_messages"].append(message_data)

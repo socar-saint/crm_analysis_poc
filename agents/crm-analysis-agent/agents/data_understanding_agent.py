@@ -3,16 +3,16 @@ Data Understanding Agent - 데이터 구조 분석 및 이해를 담당하는 Ag
 """
 
 from google.adk.agents import Agent
-from src.tools.data_analysis_tools import (
+from core.analysis.data_analysis_functions import (
     analyze_data_structure,
     identify_analysis_requirements,
     create_analysis_plan
 )
-from src.tools.domain_tools import (
+from core.llm.simple_llm_terminology_tools import (
     verify_domain_understanding,
     get_domain_glossary
 )
-from src.prompts.data_understanding_prompts import get_data_understanding_prompt
+from core.llm.prompt_engineering import PromptEngineering
 from config.column_descriptions import COLUMN_DESCRIPTIONS
 
 class DataUnderstandingAgent:
@@ -29,7 +29,7 @@ class DataUnderstandingAgent:
             name="data_understanding_agent",
             model=self.azure_llm,
             description="데이터 구조를 분석하고 분석 요구사항을 식별하는 전문가입니다.",
-            instruction=get_data_understanding_prompt(),
+            instruction=PromptEngineering.get_data_understanding_prompt(),
             tools=[
                 analyze_data_structure,
                 identify_analysis_requirements,

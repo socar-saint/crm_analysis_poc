@@ -1032,16 +1032,27 @@ class ComprehensiveHTMLReportGenerator:
                 # 퍼널별 메시지 전략 제안 섹션 추가
                 strategy_section = ""
                 if len(funnel_stats) > 0:
-                    # 3분위수 기준 그룹화 (올바른 Lift 계산)
-                    q33 = funnel_stats['lift_pct'].quantile(0.33) * 100
-                    q67 = funnel_stats['lift_pct'].quantile(0.67) * 100
+                    # 3분위수 기준 그룹화 (첫 번째 계산과 동일한 기준 사용)
+                    q33 = funnel_stats['lift_pct'].quantile(0.33)
+                    q67 = funnel_stats['lift_pct'].quantile(0.67)
                     
-                    high_group = funnel_stats[funnel_stats['lift_pct']*100 >= q67]
-                    medium_group = funnel_stats[(funnel_stats['lift_pct']*100 >= q33) & (funnel_stats['lift_pct']*100 < q67)]
-                    low_group = funnel_stats[funnel_stats['lift_pct']*100 < q33]
+                    high_group = funnel_stats[funnel_stats['lift_pct'] >= q67]
+                    medium_group = funnel_stats[(funnel_stats['lift_pct'] >= q33) & (funnel_stats['lift_pct'] < q67)]
+                    low_group = funnel_stats[funnel_stats['lift_pct'] < q33]
                     
                     # Funnel Strategy Agent 결과 파싱
                     strategy_data = {}
+                    
+                    # 디버깅: Agent 결과 확인
+                    print(f"🔍 Agent 결과 디버깅:")
+                    print(f"  - self.agent_results 존재: {self.agent_results is not None}")
+                    if self.agent_results:
+                        print(f"  - Agent 결과 키들: {list(self.agent_results.keys())}")
+                        print(f"  - funnel_strategy_analysis 존재: {'funnel_strategy_analysis' in self.agent_results}")
+                        if 'funnel_strategy_analysis' in self.agent_results:
+                            print(f"  - funnel_strategy_analysis 타입: {type(self.agent_results['funnel_strategy_analysis'])}")
+                            print(f"  - funnel_strategy_analysis 내용 (처음 200자): {str(self.agent_results['funnel_strategy_analysis'])[:200]}")
+                    
                     if self.agent_results and 'funnel_strategy_analysis' in self.agent_results:
                         try:
                             import json
@@ -1054,14 +1065,33 @@ class ComprehensiveHTMLReportGenerator:
                             print(f"⚠️ 전략 데이터 파싱 실패: {e}")
                             strategy_data = {}
                     
+                    # 디버깅: 파싱된 strategy_data 확인
+                    print(f"🔍 파싱된 strategy_data:")
+                    print(f"  - strategy_data 존재: {bool(strategy_data)}")
+                    if strategy_data:
+                        print(f"  - strategy_data 키들: {list(strategy_data.keys())}")
+                        if 'high_performance_group' in strategy_data:
+                            high_funnels = strategy_data['high_performance_group'].get('funnels', [])
+                            high_funnel_names = [f['funnel'] for f in high_funnels] if high_funnels else []
+                            print(f"  - 상위 그룹 퍼널: {high_funnel_names}")
+                    else:
+                        print(f"  - strategy_data가 비어있음")
+                    
                     # 그룹별 전략 HTML 생성 함수
                     def generate_group_strategy(group_type, group_df, q_range):
                         group_key = f"{group_type}_performance_group"
                         if strategy_data and group_key in strategy_data:
                             group_info = strategy_data[group_key]
                             
-                            # 퍼널 태그
-                            funnel_tags = ''.join([f'<span class="funnel-tag {group_type}">{row["퍼널"]}</span>' for _, row in group_df.iterrows()])
+                            # 퍼널 태그 - strategy_data에서 퍼널 목록 추출
+                            funnel_names = []
+                            if 'funnels' in group_info:
+                                funnel_names = [funnel['funnel'] for funnel in group_info['funnels']]
+                            else:
+                                # fallback: group_df 사용
+                                funnel_names = [row["퍼널"] for _, row in group_df.iterrows()]
+                            
+                            funnel_tags = ''.join([f'<span class="funnel-tag {group_type}">{name}</span>' for name in funnel_names])
                             
                             # 전략 정보 추출 (새로운 JSON 구조)
                             strategy = group_info.get('strategy', '데이터 기반 전략 수립 필요')
@@ -1090,7 +1120,8 @@ class ComprehensiveHTMLReportGenerator:
                             """
                         else:
                             # 기본 하드코딩 (Agent 결과 없을 때)
-                            funnel_tags = ''.join([f'<span class="funnel-tag {group_type}">{row["퍼널"]}</span>' for _, row in group_df.iterrows()])
+                            funnel_names = [row["퍼널"] for _, row in group_df.iterrows()]
+                            funnel_tags = ''.join([f'<span class="funnel-tag {group_type}">{name}</span>' for name in funnel_names])
                             return f"""
                             <div class="strategy-group {group_type}-group">
                                 <h5>{'🎯' if group_type == 'high' else '⚖️' if group_type == 'medium' else '⚠️'} {q_range}</h5>
@@ -1107,32 +1138,17 @@ class ComprehensiveHTMLReportGenerator:
                     <div class="funnel-strategy-section">
                         <h4>💡 퍼널별 메시지 전략 제안 (3분위수 기준)</h4>
                         <div class="strategy-groups">
-                            {generate_group_strategy('high', high_group, f'상위 그룹 (Lift ≥ {q67:.1f}%p)')}
-                            {generate_group_strategy('medium', medium_group, f'중위 그룹 (Lift {q33:.1f}~{q67:.1f}%p)')}
-                            {generate_group_strategy('low', low_group, f'하위 그룹 (Lift < {q33:.1f}%p)')}
+                            {generate_group_strategy('high', high_group, '상위 그룹')}
+                            {generate_group_strategy('medium', medium_group, '중위 그룹')}
+                            {generate_group_strategy('low', low_group, '하위 그룹')}
                     </div>
                 </div>
                     """
                 
                 funnel_analysis = funnel_table_html + strategy_section
             
-            # 문구 효과성 분석 (Lift 기준)
+            # 문구 효과성 분석 (Lift 기준) - 두 번째 박스에서 처리하므로 여기서는 제거
             message_analysis = ""
-            if '문구' in df.columns and '실험군_발송' in df.columns and '실험군_1일이내_예약생성' in df.columns and '대조군_발송' in df.columns and '대조군_1일이내_예약생성' in df.columns:
-                # Lift 계산 (올바른 계산)
-                df['exp_rate'] = df['실험군_1일이내_예약생성'] / df['실험군_발송']
-                df['ctrl_rate'] = df['대조군_1일이내_예약생성'] / df['대조군_발송']
-                df['lift'] = df['exp_rate'] - df['ctrl_rate']
-                top_messages = df.nlargest(5, 'lift')
-                
-                message_analysis = f"""
-                <div class="message-patterns">
-                    <h4>📝 상위 Lift 문구 패턴</h4>
-                    <div class="message-examples">
-                        {''.join([f'<div class="message-item"><span class="message-text">"{str(row["문구"])[:50]}..."</span><span class="conversion-rate">Lift {row["lift"]*100:+.1f}%p</span></div>' for _, row in top_messages.iterrows()])}
-                </div>
-                </div>
-                """
             
             # Boxplot 시각화 생성
             boxplot_html = ""
@@ -1178,7 +1194,7 @@ class ComprehensiveHTMLReportGenerator:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>SainTwo : 데이터 분석 자동화 Report Poc</title>
+                <title>SainTwo 🤖 : 데이터 분석 자동화 Report Poc</title>
             <style>
                 body {{
                     font-family: 'AppleGothic', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
@@ -1484,7 +1500,7 @@ class ComprehensiveHTMLReportGenerator:
                     <p>생성일: {datetime.now().strftime('%Y년 %m월 %d일 %H:%M')}</p>
                 </div>
                 
-                    <!-- 첫 번째 박스: Matt Agent: 퍼널 별 성과 분석 -->
+                    <!-- 첫 번째 박스: Matt Agent : 퍼널 별 성과 분석 -->
                     <div class="executive-summary-box">
                         <h2>Matt Agent: 퍼널 별 성과 분석</h2>
                         

@@ -68,7 +68,7 @@ logger = get_logger(__name__)
 # =============================================================================
 
 # CSV 파일 경로 (모든 함수에서 공통으로 사용)
-DEFAULT_CSV_FILE = "/Users/saint/Jupyter/1. Task/251001_Sunday_Ag/data/raw/251014_claned_Sales_TF_분석.csv"
+DEFAULT_CSV_FILE = "/Users/saint/ai-agent-platform/agents/crm-analysis-agent/data/raw/251014_claned_Sales_TF_분석.csv"
 
 # =============================================================================
 # 글로벌 Context 변수 (Agent 간 공유) - 기존 AnalysisContext 활용
@@ -524,6 +524,11 @@ comprehensive_agent = Agent(
     instruction=f"""
     # 종합 CRM 분석 전문가
     
+    ## 필수 도구 사용 규칙
+    **절대 규칙**: 퍼널별 메시지 전략 제안을 위해 반드시 prepare_funnel_quantile_data 도구를 먼저 호출해야 합니다.
+    **도구 미사용 시 분석 불가**: prepare_funnel_quantile_data 도구를 호출하지 않으면 정확한 3분위수 기준 그룹화가 불가능합니다.
+    **순서**: 1) prepare_funnel_quantile_data 호출 → 2) 결과 종합 → 3) 최종 보고서 생성
+    
     ## 역할
     당신은 쏘카의 Senior Data Analyst로서, 이전 Agent들의 모든 분석 결과를 종합하여 
     비즈니스 인사이트와 실행 가능한 추천사항을 제공하는 전문가입니다.
@@ -531,18 +536,35 @@ comprehensive_agent = Agent(
     ## 컬럼 설명
     {COLUMN_DESCRIPTIONS}
     
+    ## 강제 분석 프로세스 (순서대로 실행)
+    **STEP 1: 필수 도구 호출**
+    - 반드시 prepare_funnel_quantile_data 도구를 먼저 호출하세요
+    - 이 도구는 Lift 기준으로 상위/중위/하위 그룹을 자동 분류하고 각 그룹의 상위 성과 문구를 제공합니다
+    - 도구 호출 없이는 정확한 퍼널별 메시지 전략 제안이 불가능합니다
+    
+    **STEP 2: 종합 분석 (도구 결과 기반)**
+    - prepare_funnel_quantile_data 결과를 기반으로 퍼널별 메시지 전략 제안
+    - 이전 Agent들의 분석 결과와 prepare_funnel_quantile_data 결과를 통합
+    - 각 분석 결과 간의 일관성과 상호 보완성 검토
+    
+    **STEP 3: 최종 보고서 생성**
+    - prepare_funnel_quantile_data의 실제 데이터를 기반으로 한 종합적 인사이트 도출
+    - 실행 가능한 추천사항 및 액션 아이템 제시
+    - DataFrame/JSON 형태의 구조화된 최종 보고서 생성
+    
     ## 분석 목표
-    1. 이전 Agent들의 모든 분석 결과를 종합 검토
-    2. 통계적 분석과 LLM 분석 결과의 교차 검증
-    3. 비즈니스 관점에서의 종합적 인사이트 도출
-    4. **퍼널별 메시지 전략 제안** (3분위수 기준 그룹화)
-    5. **퍼널별 문구 특징 및 성공 패턴 분석**
-    6. 실행 가능한 추천사항 및 액션 아이템 제시
-    7. DataFrame/JSON 형태의 구조화된 최종 보고서 생성
+    1. **3분위수 기준 그룹화**: prepare_funnel_quantile_data에서 제공하는 상위/중위/하위 성과 그룹 특성 파악
+    2. **통계적 분석과 LLM 분석 결과의 교차 검증**: prepare_funnel_quantile_data 결과와 이전 Agent 결과 비교
+    3. **비즈니스 관점에서의 종합적 인사이트 도출**: prepare_funnel_quantile_data의 실제 데이터 기반
+    4. **퍼널별 메시지 전략 제안**: prepare_funnel_quantile_data의 그룹 분류를 기반으로 한 전략 제안
+    5. **퍼널별 문구 특징 및 성공 패턴 분석**: prepare_funnel_quantile_data의 top_messages 데이터 활용
+    6. **실행 가능한 추천사항 및 액션 아이템 제시**: prepare_funnel_quantile_data의 실제 성과 데이터 기반
+    7. **DataFrame/JSON 형태의 구조화된 최종 보고서 생성**: prepare_funnel_quantile_data 결과 포함
     
     ## Context 활용
+    - **필수**: prepare_funnel_quantile_data 도구를 먼저 호출하여 3분위수 기준 데이터 준비
     - context에서 이전 Agent들의 모든 결과를 확인
-    - Data Understanding, Statistical Analysis, LLM Analysis 결과를 통합
+    - Data Understanding, Statistical Analysis, LLM Analysis 결과를 prepare_funnel_quantile_data 결과와 통합
     - 각 분석 결과 간의 일관성과 상호 보완성 검토
     - 종합적인 관점에서 최종 결론 도출
     - **중요**: structure_llm_analysis_for_html 도구를 반드시 호출하여 LLM 분석 결과를 HTML 규격에 맞게 구조화
@@ -550,8 +572,8 @@ comprehensive_agent = Agent(
     ## 출력 형식
     - 핵심 요약 보고서
     - 상세 분석 결과 통합
-    - **퍼널별 메시지 전략 제안** (표 형태)
-    - **퍼널별 문구 특징 분석** (표 형태)
+    - **퍼널별 메시지 전략 제안** (prepare_funnel_quantile_data 결과 기반 표 형태)
+    - **퍼널별 문구 특징 분석** (prepare_funnel_quantile_data의 top_messages 데이터 기반 표 형태)
     - 실행 가능한 추천사항
     - **LLM 분석 결과 구조화**: structure_llm_analysis_for_html 도구 사용하여 HTML 규격에 맞게 구조화
       - 문장 구조 분석, 핵심 키워드 분석, 톤앤매너 분석
@@ -559,14 +581,14 @@ comprehensive_agent = Agent(
       - 효과적 문구 패턴, 톤앤매너 효과성
     - DataFrame/JSON 형태의 구조화된 결과
     
-    ## 퍼널별 메시지 전략 제안 요구사항
-    1. **3분위수 기준 그룹화**: Lift 기준으로 상위/중위/하위 그룹 분류
-    2. **각 그룹별 메시지 전략**: "이 그룹에는 계속 이런 메시지로 보내라"
-    3. **퍼널 그룹화 공통점**: 각 그룹의 성공 문구 패턴 공통점 분석
-    4. **퍼널별 문구 특징**: 각 퍼널의 성공 문구 특징 및 사유
-    5. **실험군 vs 대조군 기준**: Lift 기반 분석
-    6. **퍼널별 전환율 높은 캠페인 문구 예시**: 각 퍼널에서 실제로 전환율이 높았던 구체적인 문구 예시 포함
-       - 형식: "T3_대여장소: '구체적 문구 내용' (전환율 XX%)"
+    ## 퍼널별 메시지 전략 제안 요구사항 (prepare_funnel_quantile_data 기반)
+    1. **3분위수 기준 그룹화**: prepare_funnel_quantile_data에서 제공하는 Lift 기준 상위/중위/하위 그룹 분류 사용
+    2. **각 그룹별 메시지 전략**: prepare_funnel_quantile_data의 실제 성과 데이터를 기반으로 "이 그룹에는 계속 이런 메시지로 보내라"
+    3. **퍼널 그룹화 공통점**: prepare_funnel_quantile_data의 top_messages 데이터를 기반으로 각 그룹의 성공 문구 패턴 공통점 분석
+    4. **퍼널별 문구 특징**: prepare_funnel_quantile_data의 실제 문구 데이터를 기반으로 각 퍼널의 성공 문구 특징 및 사유
+    5. **실험군 vs 대조군 기준**: prepare_funnel_quantile_data의 Lift 기반 분석 사용
+    6. **퍼널별 전환율 높은 캠페인 문구 예시**: prepare_funnel_quantile_data에서 제공하는 퍼널별 가장 효과적인 문구와 전환율 활용
+       - 형식: "T3_대여장소: '구체적 문구 내용' (실험군 XX%, 대조군 XX%)"
        - 각 퍼널별로 최소 1개 이상의 실제 성공 문구 예시 필수
        - 전환율 수치와 함께 구체적인 문구 내용 반드시 포함
     """,
@@ -589,6 +611,11 @@ funnel_strategy_agent = Agent(
     instruction=f"""
     # 퍼널별 메시지 전략 제안 전문가
     
+    ## 필수 도구 사용 규칙
+    **절대 규칙**: 이 분석을 시작하기 전에 반드시 prepare_funnel_quantile_data 도구를 먼저 호출해야 합니다.
+    **도구 미사용 시 분석 불가**: prepare_funnel_quantile_data 도구를 호출하지 않으면 정확한 분석이 불가능합니다.
+    **순서**: 1) prepare_funnel_quantile_data 호출 → 2) 결과 분석 → 3) JSON 출력
+    
     ## 역할
     당신은 쏘카의 CRM 마케팅 전략 전문가로서, 퍼널별 성과 데이터를 분석하여 
     각 성과 그룹(상위/중위/하위)에 맞는 메시지 전략을 제안하는 전문가입니다.
@@ -596,21 +623,31 @@ funnel_strategy_agent = Agent(
     ## 컬럼 설명
     {COLUMN_DESCRIPTIONS}
     
+    ## 강제 분석 프로세스 (순서대로 실행)
+    **STEP 1: 필수 도구 호출**
+    - 반드시 prepare_funnel_quantile_data 도구를 먼저 호출하세요
+    - 이 도구는 Lift 기준으로 상위/중위/하위 그룹을 자동 분류하고 각 그룹의 상위 성과 문구를 제공합니다
+    - 도구 호출 없이는 분석을 진행할 수 없습니다
+    
+    **STEP 2: 그룹별 분석 (도구 결과 기반)**
+    - high_performance_group: prepare_funnel_quantile_data 결과의 상위 그룹 퍼널들 분석
+    - medium_performance_group: prepare_funnel_quantile_data 결과의 중위 그룹 퍼널들 분석  
+    - low_performance_group: prepare_funnel_quantile_data 결과의 하위 그룹 퍼널들 분석
+    
+    **STEP 3: 전략 도출 (도구 데이터 활용)**
+    - prepare_funnel_quantile_data에서 제공하는 실제 문구와 전환율 데이터를 기반으로 분석
+    - 각 그룹의 top_messages 데이터를 활용하여 공통 패턴 도출
+    - 문구 구조, 톤앤매너, 키워드, 전환율 기여 요소 분석
+    
     ## 분석 목표
-    1. **3분위수 기준 그룹별 분석**: 상위/중위/하위 성과 그룹의 특성 파악
+    1. **3분위수 기준 그룹별 분석**: prepare_funnel_quantile_data에서 제공하는 상위/중위/하위 성과 그룹 특성 파악
     2. **그룹별 메시지 전략 제안**: 각 그룹에 적합한 메시지 전략 도출
-    3. **메시지 패턴 분석**: 성공한 문구들의 공통 패턴 분석
-    4. **공통 특징 도출**: 각 그룹의 성공 문구 공통 특징 분석
-    5. **구체적 제안**: 실행 가능한 메시지 제안 도출
-    6. **핵심 키워드**: 각 그룹의 핵심 키워드 추출
-    7. **성공 사례**: 실제 성공 문구 사례 제시
-    
-    ## 분석 방법
-    - 실제 문구 데이터와 Lift 수치를 기반으로 분석
-    - 각 그룹의 상위 성과 문구들을 종합적으로 검토
-    - 문구의 구조, 톤앤매너, 키워드, 패턴을 분석
-    - 비즈니스 관점에서 실행 가능한 전략 제안
-    
+    3. **메시지 패턴 분석**: prepare_funnel_quantile_data의 top_messages 데이터를 기반으로 공통 패턴 분석
+    4. **공통 특징 도출**: prepare_funnel_quantile_data의 실제 문구 데이터를 기반으로 특징 분석
+    5. **구체적 제안**: prepare_funnel_quantile_data의 실제 성과 데이터를 기반으로 실행 가능한 제안 도출
+    6. **핵심 키워드**: prepare_funnel_quantile_data의 실제 문구에서 추출
+    7. **성공 사례**: prepare_funnel_quantile_data에서 제공하는 퍼널별 가장 효과적인 문구와 전환율 활용
+        
     ## 출력 형식 (JSON 필수)
     **중요**: 반드시 아래 JSON 형식으로 출력하세요.
     
@@ -620,7 +657,7 @@ funnel_strategy_agent = Agent(
     - common_features: 공통 특징 (정확히 3개, 각 특징은 3-5단어로 간결하게)
     - recommendations: 구체적 제안 (정확히 2개)
     - keywords: 핵심 키워드 (5-7개)
-    - funnel_top_messages: 퍼널별 가장 효과적인 문구와 전환율 (수치 포함)
+    - funnel_top_messages: prepare_funnel_quantile_data에서 제공하는 퍼널별 가장 효과적인 문구와 전환율 (수치 포함)
     
     JSON 예시:
     {{
@@ -630,17 +667,31 @@ funnel_strategy_agent = Agent(
         "common_features": ["간결한 특징1", "간결한 특징2", "간결한 특징3"],
         "recommendations": ["제안1", "제안2"],
         "keywords": ["키워드1", "키워드2", "키워드3", "키워드4", "키워드5"],
-        "funnel_top_messages": ["퍼널: 문구 (실험군 XX%, 대조군 XX%)"]
+        "funnel_top_messages": ["퍼널명: '구체적 문구 내용' (실험군 XX%, 대조군 XX%)"]
       }},
       "medium_performance_group": {{...동일한 구조...}},
       "low_performance_group": {{...동일한 구조...}}
     }}
     
-    ## Context 활용
-    - prepare_funnel_quantile_data 도구로 준비된 분위수 데이터 활용
-    - 각 그룹의 실제 문구와 성과 수치를 기반으로 분석
-    - 데이터 기반의 객관적이고 실행 가능한 전략 제안
-    - **출력은 반드시 JSON 형식으로만 제공** (마크다운 불가)
+    ## 필수 Context 활용 규칙
+    - **절대 규칙**: prepare_funnel_quantile_data 도구를 먼저 호출하지 않으면 분석 불가
+    - **데이터 소스**: prepare_funnel_quantile_data에서 제공하는 quantile_thresholds, high_performance_group, medium_performance_group, low_performance_group 데이터만 사용
+    - **문구 데이터**: prepare_funnel_quantile_data의 top_messages 데이터를 활용하여 실제 문구와 전환율 수치 사용
+    - **그룹 분류**: prepare_funnel_quantile_data의 동적 기준값(q33, q67)을 사용하여 그룹 분류
+    - **출력 형식**: 반드시 JSON 형식으로만 제공 (마크다운 불가)
+    
+    ## 분석 실행 순서
+    1. **prepare_funnel_quantile_data 도구 호출** (필수)
+    2. **도구 결과에서 그룹별 데이터 추출**
+    3. **각 그룹의 top_messages 분석**
+    4. **공통 패턴 및 특징 도출**
+    5. **JSON 형식으로 결과 출력**
+    
+    ## 분석 예시 (prepare_funnel_quantile_data 호출 후)
+    - high_performance_group.funnels[].top_messages[]에서 각 퍼널의 상위 성과 문구 확인
+    - 각 문구의 lift, exp_rate, ctrl_rate 수치를 활용하여 분석
+    - 실제 문구 내용과 전환율을 기반으로 패턴 도출
+    - quantile_thresholds의 q33, q67 값을 사용하여 그룹 기준 명시
     """,
     tools=[
         prepare_funnel_quantile_data
@@ -769,6 +820,11 @@ funnel_segment_agent = Agent(
     instruction=f"""
     # 퍼널별 세그먼트 분석 전문가 (Lift 기반)
     
+    ## 필수 도구 사용 규칙
+    **절대 규칙**: 이 분석을 시작하기 전에 반드시 prepare_funnel_quantile_data 도구를 먼저 호출해야 합니다.
+    **도구 미사용 시 분석 불가**: prepare_funnel_quantile_data 도구를 호출하지 않으면 정확한 분석이 불가능합니다.
+    **순서**: 1) prepare_funnel_quantile_data 호출 → 2) 결과 분석 → 3) 전략표 출력
+    
     ## 역할
     당신은 퍼널별 세그먼트 분석 및 메시지 전략 전문가입니다.
     각 퍼널의 Lift 성과를 기준으로 상위/중위/하위 그룹을 분류하고,
@@ -777,25 +833,34 @@ funnel_segment_agent = Agent(
     ## 컬럼 설명
     {COLUMN_DESCRIPTIONS}
     
+    ## 강제 분석 프로세스 (순서대로 실행)
+    **STEP 1: 필수 도구 호출**
+    - 반드시 prepare_funnel_quantile_data 도구를 먼저 호출하세요
+    - 이 도구는 Lift 기준으로 상위/중위/하위 그룹을 자동 분류하고 각 그룹의 상위 성과 문구를 제공합니다
+    - 도구 호출 없이는 분석을 진행할 수 없습니다
+    
+    **STEP 2: 그룹별 분석 (도구 결과 기반)**
+    - prepare_funnel_quantile_data 결과의 high_performance_group 분석
+    - prepare_funnel_quantile_data 결과의 medium_performance_group 분석  
+    - prepare_funnel_quantile_data 결과의 low_performance_group 분석
+    
+    **STEP 3: 전략 도출 (도구 데이터 활용)**
+    - prepare_funnel_quantile_data에서 제공하는 실제 문구와 전환율 데이터를 기반으로 분석
+    - 각 그룹의 top_messages 데이터를 활용하여 공통 패턴 도출
+    - 문구 구조, 톤앤매너, 키워드, 전환율 기여 요소 분석
+    
     ## 분석 목표
-    1. 각 퍼널의 Lift 기준 3분위수 계산 (상위 33%, 중위 33%, 하위 33%)
-    2. 그룹별 성공 문구 패턴 및 키워드 도출
-    3. 각 그룹의 성공 요인 및 공통점 분석
-    4. 그룹별 맞춤형 메시지 전략 제안
-    5. 퍼널별 최적화 방안 제시
+    1. **3분위수 기준 그룹별 분석**: prepare_funnel_quantile_data에서 제공하는 상위/중위/하위 성과 그룹 특성 파악
+    2. **그룹별 메시지 전략 제안**: 각 그룹에 적합한 메시지 전략 도출
+    3. **메시지 패턴 분석**: prepare_funnel_quantile_data의 top_messages 데이터를 기반으로 공통 패턴 분석
+    4. **공통 특징 도출**: prepare_funnel_quantile_data의 실제 문구 데이터를 기반으로 특징 분석
+    5. **구체적 제안**: prepare_funnel_quantile_data의 실제 성과 데이터를 기반으로 실행 가능한 제안 도출
     
     ## Lift 개념
     - Lift = 실험군 전환율 - 대조군 전환율
-    - 상위 그룹: Lift 상위 33% (가장 효과적인 메시지)
-    - 중위 그룹: Lift 중간 33% (개선 가능한 메시지)
-    - 하위 그룹: Lift 하위 33% (개선 필요 메시지)
-    
-    ## 분석 프로세스
-    1. 먼저 analyze_funnel_segment_strategy_tool을 호출하여 정제된 데이터를 준비
-    2. 준비된 데이터를 바탕으로 퍼널별 세그먼트 분석 수행
-    3. 각 그룹의 성공 문구 패턴 및 키워드 도출
-    4. 그룹별 맞춤형 메시지 전략 제안
-    5. 퍼널별 최적화 권장사항 제시
+    - 상위 그룹: prepare_funnel_quantile_data의 high_performance_group (가장 효과적인 메시지)
+    - 중위 그룹: prepare_funnel_quantile_data의 medium_performance_group (개선 가능한 메시지)
+    - 하위 그룹: prepare_funnel_quantile_data의 low_performance_group (개선 필요 메시지)
     
     ## 출력 형식
     📊 퍼널별 세그먼트 전략표 (Lift 기준)
@@ -815,22 +880,30 @@ funnel_segment_agent = Agent(
     └─────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
     
     🎯 그룹별 성공 패턴:
-    - 상위 그룹: [Lift +X.X%p 이상] [성공 패턴 및 키워드]
-    - 중위 그룹: [Lift ±X.X%p] [중간 패턴 및 개선점]
-    - 하위 그룹: [Lift -X.X%p 이하] [문제점 및 개선 방안]
+    - 상위 그룹: [prepare_funnel_quantile_data에서 제공하는 동적 기준값 사용] [성공 패턴 및 키워드]
+    - 중위 그룹: [prepare_funnel_quantile_data에서 제공하는 동적 기준값 사용] [중간 패턴 및 개선점]
+    - 하위 그룹: [prepare_funnel_quantile_data에서 제공하는 동적 기준값 사용] [문제점 및 개선 방안]
     
     💡 퍼널별 최적화 권장사항:
     - [퍼널명]: [구체적 개선 방안]
     
-    ## 중요 사항
-    - 모든 분석은 Lift 기준으로 수행
-    - 전환율은 소수점 없이 정수로 표시 (예: 21%)
-    - Lift는 소수점 1자리까지 표시 (예: +2.3%p)
-    - 그룹별 구체적인 메시지 전략 제시
-    - 실행 가능한 최적화 권장사항 포함
-    - 경영진이 이해하기 쉬운 형태로 제시
+    ## 🚨 필수 Context 활용 규칙
+    - **절대 규칙**: prepare_funnel_quantile_data 도구를 먼저 호출하지 않으면 분석 불가
+    - **데이터 소스**: prepare_funnel_quantile_data에서 제공하는 quantile_thresholds, high_performance_group, medium_performance_group, low_performance_group 데이터만 사용
+    - **문구 데이터**: prepare_funnel_quantile_data의 top_messages 데이터를 활용하여 실제 문구와 전환율 수치 사용
+    - **그룹 분류**: prepare_funnel_quantile_data의 동적 기준값(q33, q67)을 사용하여 그룹 분류
+    - **전환율 표시**: 소수점 없이 정수로 표시 (예: 21%)
+    - **Lift 표시**: 소수점 1자리까지 표시 (예: +2.3%p)
+    
+    ## 🔥 분석 실행 순서
+    1. **prepare_funnel_quantile_data 도구 호출** (필수)
+    2. **도구 결과에서 그룹별 데이터 추출**
+    3. **각 그룹의 top_messages 분석**
+    4. **공통 패턴 및 특징 도출**
+    5. **전략표 형식으로 결과 출력**
     """,
     tools=[
+        prepare_funnel_quantile_data,
         prepare_funnel_segment_data,
         analyze_funnel_segment_strategy_tool,
         create_segment_lift_charts
@@ -953,6 +1026,11 @@ async def run_agent_with_llm(agent, query: str, agent_name: str, context_info: s
                     context.funnel_segment_analysis = response
                 elif agent_name == "funnel_strategy_analysis":
                     context.funnel_strategy_analysis = response
+                    print(f"🔍 Funnel Strategy Agent 결과 디버깅:")
+                    print(f"  - 응답 길이: {len(response) if response else 0}")
+                    print(f"  - 응답 타입: {type(response)}")
+                    print(f"  - 응답 내용 (처음 200자): {response[:200] if response else 'None'}")
+                    print(f"  - JSON 형식인지 확인: {'{' in response if response else False}")
                 elif agent_name == "statistical_analysis":
                     context.funnel_analysis = response
                 elif agent_name == "llm_analysis":
@@ -1024,15 +1102,37 @@ async def run_comprehensive_analysis():
     strategy_query = f"""
     다음 CRM 데이터의 퍼널별 메시지 전략을 제안해주세요: {csv_file}
 
-    다음 분석을 수행해주세요:
-    1. prepare_funnel_quantile_data 도구를 사용해서 분위수 데이터를 준비
-    2. 각 그룹의 실제 문구와 Lift 수치를 기반으로 분석
-    3. 그룹별 메시지 전략, 메시지 패턴, 공통 특징, 구체적 제안, 핵심 키워드, 성공 사례 도출
-    4. 퍼널별 가장 효과적인 문구와 전환율 추출 (수치 포함)
+    **🚨 CRITICAL: 도구 호출 필수**
+    - **첫 번째 단계: 반드시 prepare_funnel_quantile_data 도구를 호출하세요**
+    - **도구 호출 없이는 절대 분석을 시작하지 마세요**
+    - **도구에서 제공하는 실제 q33, q67 값을 사용하여 그룹 제목을 생성하세요**
+    - **절대 1.5%p, 0.2%p 같은 하드코딩된 값을 사용하지 마세요**
+    - **도구 호출 결과를 반드시 사용하여 그룹 제목을 생성하세요**
+    - **도구 호출 후에만 분석을 진행하세요**
 
-    **중요**: 결과는 반드시 JSON 형식으로 출력하세요.
+    **분석 프로세스**:
+    1. **STEP 1: prepare_funnel_quantile_data 도구 호출** (필수)
+    2. **STEP 2: 도구 결과에서 q33, q67 값 추출**
+    3. **STEP 3: 추출된 값으로 그룹 제목 생성** (예: "상위 그룹 (Lift ≥ X.X%p)")
+    4. **STEP 4: 도구에서 제공하는 각 그룹(high/medium/low)의 실제 문구와 Lift 수치를 기반으로 분석**
+    5. **STEP 5: 각 그룹의 상위 성과 문구들을 종합하여 공통 패턴 도출**
+    6. **STEP 6: 그룹별 메시지 전략, 메시지 패턴, 공통 특징, 구체적 제안, 핵심 키워드 도출**
+    7. **STEP 7: 퍼널별 가장 효과적인 문구**: prepare_funnel_quantile_data에서 제공하는 top_messages 데이터 활용
+
+    **출력 요구사항**:
+    - funnel_top_messages에는 실제 문구 내용과 전환율 수치를 포함
+    - 형식: "퍼널명: '구체적 문구 내용' (실험군 XX%, 대조군 XX%)"
+    - 결과는 반드시 JSON 형식으로 출력
+
+    **중요**: 
+    - 결과는 반드시 JSON 형식으로 출력하세요
+    - **절대 하드코딩된 기준값(1.5%p, 0.2%p 등)을 사용하지 마세요**
+    - **반드시 prepare_funnel_quantile_data 도구를 먼저 호출하여 동적 기준값을 사용하세요**
+    - **도구 호출 없이는 분석을 시작하지 마세요**
+    - **도구에서 제공하는 실제 q33, q67 값을 사용하여 그룹 제목을 생성하세요**
+    
     {{
-      "high_performance_group": {{"strategy": "...", "message_pattern": "...", ...}},
+      "high_performance_group": {{"strategy": "...", "message_pattern": "...", "funnel_top_messages": ["퍼널명: '문구' (실험군 XX%, 대조군 XX%)"]}},
       "medium_performance_group": {{...}},
       "low_performance_group": {{...}}
     }}
@@ -1677,15 +1777,21 @@ async def run_funnel_message_analysis_with_report():
         strategy_query = f"""
         다음 CRM 데이터의 퍼널별 메시지 전략을 제안해주세요: {csv_file}
 
-        다음 분석을 수행해주세요:
-        1. prepare_funnel_quantile_data 도구를 사용해서 분위수 데이터를 준비
-        2. 각 그룹의 실제 문구와 Lift 수치를 기반으로 분석
-        3. 그룹별 메시지 전략, 메시지 패턴, 공통 특징, 구체적 제안, 핵심 키워드, 성공 사례 도출
-        4. 퍼널별 가장 효과적인 문구와 전환율 추출 (수치 포함)
+        **분석 프로세스**:
+        1. **먼저 prepare_funnel_quantile_data 도구를 호출**하여 3분위수 기준 데이터를 준비하세요
+        2. 도구에서 제공하는 각 그룹(high/medium/low)의 실제 문구와 Lift 수치를 기반으로 분석
+        3. 각 그룹의 상위 성과 문구들을 종합하여 공통 패턴 도출
+        4. 그룹별 메시지 전략, 메시지 패턴, 공통 특징, 구체적 제안, 핵심 키워드 도출
+        5. **퍼널별 가장 효과적인 문구**: prepare_funnel_quantile_data에서 제공하는 top_messages 데이터 활용
+
+        **출력 요구사항**:
+        - funnel_top_messages에는 실제 문구 내용과 전환율 수치를 포함
+        - 형식: "퍼널명: '구체적 문구 내용' (실험군 XX%, 대조군 XX%)"
+        - 결과는 반드시 JSON 형식으로 출력
 
         **중요**: 결과는 반드시 JSON 형식으로 출력하세요.
         {{
-          "high_performance_group": {{"strategy": "...", "message_pattern": "...", ...}},
+          "high_performance_group": {{"strategy": "...", "message_pattern": "...", "funnel_top_messages": ["퍼널명: '문구' (실험군 XX%, 대조군 XX%)"]}},
           "medium_performance_group": {{...}},
           "low_performance_group": {{...}}
         }}
@@ -1796,12 +1902,24 @@ async def run_funnel_message_analysis_with_report():
             from core.reporting.comprehensive_html_report import ComprehensiveHTMLReportGenerator
             
             # Agent 결과들을 딕셔너리로 정리
+            print(f"🔍 Context 디버깅:")
+            print(f"  - context.funnel_strategy_analysis 존재: {hasattr(context, 'funnel_strategy_analysis')}")
+            if hasattr(context, 'funnel_strategy_analysis'):
+                print(f"  - context.funnel_strategy_analysis 값: {context.funnel_strategy_analysis is not None}")
+                if context.funnel_strategy_analysis:
+                    print(f"  - context.funnel_strategy_analysis 타입: {type(context.funnel_strategy_analysis)}")
+                    print(f"  - context.funnel_strategy_analysis 내용 (처음 200자): {str(context.funnel_strategy_analysis)[:200]}")
+            
             agent_results = {
                 'funnel_strategy_analysis': context.funnel_strategy_analysis if hasattr(context, 'funnel_strategy_analysis') and context.funnel_strategy_analysis else "분석 중",
                 'statistical_analysis': context.funnel_analysis if context.funnel_analysis else "분석 중",
                 'llm_analysis': context.llm_analysis if hasattr(context, 'llm_analysis') and context.llm_analysis else "분석 중",
                 'structured_llm_analysis': "분석 중"  # 참조하지 않음
             }
+            
+            print(f"🔍 Agent 결과 딕셔너리:")
+            for key, value in agent_results.items():
+                print(f"  - {key}: {type(value)} - {str(value)[:100]}...")
             
             # 새로운 경영진용 2박스 구조 보고서 생성
             new_report_generator = ComprehensiveHTMLReportGenerator(csv_file)
