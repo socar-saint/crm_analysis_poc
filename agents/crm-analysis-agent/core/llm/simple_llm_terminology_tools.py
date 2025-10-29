@@ -4,7 +4,7 @@ import re
 import json
 import pandas as pd
 from typing import Dict, Any, List
-from .domain_knowledge import DomainKnowledge
+from core.llm.domain_knowledge import DomainKnowledge
 import litellm
 from config.settings import settings
 
@@ -29,7 +29,7 @@ def validate_csv_terms_with_llm(csv_file_path: str) -> Dict[str, Any]:
         all_terms = list(set(korean_terms + english_terms))
         
         # 2. 도메인 용어사전 로드
-        from domain_knowledge import DomainTerminology
+        from core.llm.domain_knowledge import DomainTerminology
         domain_terms = DomainTerminology.get_domain_terms()
         technical_terms = DomainTerminology.get_technical_terms()
         business_metrics = DomainTerminology.get_business_metrics()
@@ -39,9 +39,20 @@ def validate_csv_terms_with_llm(csv_file_path: str) -> Dict[str, Any]:
         term_evaluations = []
         total_score = 0
         
-        # 상위 10개 용어를 한 번에 분석
-        terms_to_analyze = all_terms[:10]
-        print(f"🚀 배치 용어 분석 중: {len(terms_to_analyze)}개 용어 (API 호출 1회)")
+        # 용어 빈도 계산하여 10번 이상 사용된 용어만 분석
+        from collections import Counter
+        korean_counter = Counter(korean_terms)
+        english_counter = Counter(english_terms)
+        
+        # 10번 이상 사용된 용어 필터링
+        korean_frequent = [term for term, count in korean_counter.items() if count >= 10]
+        english_frequent = [term for term, count in english_counter.items() if count >= 10]
+        frequent_terms = korean_frequent + english_frequent
+        
+        # 상위 40개 용어를 한 번에 분석 (10번 이상 사용된 용어 중에서)
+        terms_to_analyze = frequent_terms[:40] if len(frequent_terms) >= 40 else frequent_terms
+        print(f"🚀 배치 용어 분석 중: {len(terms_to_analyze)}개 용어 (10회 이상 사용된 용어 중 상위 {len(terms_to_analyze)}개, API 호출 1회)")
+        print(f"📊 10회 이상 사용된 용어 총 개수: {len(frequent_terms)}개 (한글: {len(korean_frequent)}개, 영문: {len(english_frequent)}개)")
         
         # 용어별 컨텍스트와 용어사전 정의 수집
         term_data = []
@@ -147,11 +158,23 @@ def validate_csv_terms_with_llm(csv_file_path: str) -> Dict[str, Any]:
         return {
             "status": "success",
             "csv_file": csv_file_path,
-            "total_terms_analyzed": len(term_evaluations),
+            "total_terms_found": len(all_terms),
+            "frequent_terms_count": len(frequent_terms),
+            "analyzed_terms": len(terms_to_analyze),
             "overall_score": overall_score,
+            "term_evaluations": term_evaluations,
             "high_understanding_terms": high_terms,
             "low_understanding_terms": low_terms,
-            "message": f"CSV 용어 검증 완료: {overall_score:.1f}% 이해도"
+            "analysis_type": "batch_llm_analysis",
+            "message": f"배치 분석 완료: 평균 이해도 {overall_score:.1f}%",
+            "summary": {
+                "korean_frequent_terms": len(korean_frequent),
+                "english_frequent_terms": len(english_frequent),
+                "total_frequent_terms": len(frequent_terms),
+                "analyzed_terms_count": len(terms_to_analyze),
+                "understanding_score": overall_score,
+                "low_understanding_terms": len([t for t in term_evaluations if t.get('score', 0) < 70])
+            }
         }
         
     except Exception as e:
@@ -165,7 +188,7 @@ def get_domain_glossary() -> Dict[str, Any]:
     print("--- Tool: get_domain_glossary called ---")
     
     try:
-        from domain_knowledge import DomainTerminology
+        from core.llm.domain_knowledge import DomainTerminology
         domain_terms = DomainTerminology.get_domain_terms()
         technical_terms = DomainTerminology.get_technical_terms()
         business_metrics = DomainTerminology.get_business_metrics()
@@ -203,7 +226,7 @@ def validate_csv_terms_simple(csv_file_path: str) -> Dict[str, Any]:
         all_terms = list(set(korean_terms + english_terms))
         
         # 2. 도메인 용어사전 로드
-        from domain_knowledge import DomainTerminology
+        from core.llm.domain_knowledge import DomainTerminology
         domain_terms = DomainTerminology.get_domain_terms()
         technical_terms = DomainTerminology.get_technical_terms()
         business_metrics = DomainTerminology.get_business_metrics()

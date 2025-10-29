@@ -1011,6 +1011,12 @@ async def run_agent_with_llm(agent, query: str, agent_name: str, context_info: s
             if tool_name == "structure_llm_analysis_for_html":
                 context.structured_llm_analysis = tool_result
                 print(f"✅ HTML 규격 구조화 완료 (structure_llm_analysis_for_html by {agent_name})")
+            
+            # 용어 검증 결과 저장
+            if tool_name == "validate_csv_terms_with_llm":
+                context.terminology_analysis = tool_result
+                print(f"✅ 용어 검증 결과 저장 완료 (validate_csv_terms_with_llm by {agent_name})")
+                print(f"🔍 용어 이해도 점수: {tool_result.get('overall_score', 'N/A')}%")
         
         if event.is_final_response():
             if event.content and event.content.parts:
@@ -1020,6 +1026,8 @@ async def run_agent_with_llm(agent, query: str, agent_name: str, context_info: s
                 # 응답을 컨텍스트에 저장
                 if agent_name == "data_understanding":
                     context.data_info = response
+                    # 용어 검증 결과도 별도로 저장 (도구 호출 결과에서 추출)
+                    # validate_csv_terms_with_llm 도구 호출 결과가 있다면 terminology_analysis에 저장
                 elif agent_name == "category_analysis":
                     context.category_analysis = response
                 elif agent_name == "funnel_segment_analysis":
@@ -1161,12 +1169,18 @@ async def run_comprehensive_analysis():
     Data Understanding Agent 결과:
     - 데이터 구조: {context.data_info if context.data_info else "아직 분석 중"}
     - 분석 계획: {context.analysis_plan if context.analysis_plan else "아직 분석 중"}
+    - 용어 이해도: {context.terminology_analysis.get('overall_score', 'N/A') if context.terminology_analysis else "아직 분석 중"}%
     
     Category Analysis Agent 결과:
     - 카테고리 분석: {context.category_analysis if hasattr(context, 'category_analysis') and context.category_analysis else "아직 분석 중"}
     
     Funnel Segment Analysis Agent 결과:
     - 퍼널 세그먼트 분석: {context.funnel_segment_analysis if hasattr(context, 'funnel_segment_analysis') and context.funnel_segment_analysis else "아직 분석 중"}
+    
+    용어 검증 결과:
+    - 전체 이해도 점수: {context.terminology_analysis.get('overall_score', 'N/A') if context.terminology_analysis else "아직 분석 중"}%
+    - 분석된 용어 수: {len(context.terminology_analysis.get('term_evaluations', [])) if context.terminology_analysis else 0}개
+    - 미이해 용어: {len([t for t in context.terminology_analysis.get('term_evaluations', []) if t.get('score', 0) < 70]) if context.terminology_analysis else 0}개
     """
     
     await run_agent_with_llm(statistical_analyst_agent, statistical_query, "statistical_analysis", context_info)
@@ -1210,6 +1224,7 @@ async def run_comprehensive_analysis():
     Data Understanding Agent 결과:
     - 데이터 구조: {context.data_info if context.data_info else "아직 분석 중"}
     - 분석 계획: {context.analysis_plan if context.analysis_plan else "아직 분석 중"}
+    - 용어 이해도: {context.terminology_analysis.get('overall_score', 'N/A') if context.terminology_analysis else "아직 분석 중"}%
     
     Category Analysis Agent 결과:
     - 카테고리 분석: {context.category_analysis if hasattr(context, 'category_analysis') and context.category_analysis else "아직 분석 중"}
@@ -1219,6 +1234,11 @@ async def run_comprehensive_analysis():
     
     Statistical Analysis Agent 결과:
     - 퍼널 분석: {context.funnel_analysis if context.funnel_analysis else "아직 분석 중"}
+    
+    용어 검증 결과:
+    - 전체 이해도 점수: {context.terminology_analysis.get('overall_score', 'N/A') if context.terminology_analysis else "아직 분석 중"}%
+    - 분석된 용어 수: {len(context.terminology_analysis.get('term_evaluations', [])) if context.terminology_analysis else 0}개
+    - 미이해 용어: {len([t for t in context.terminology_analysis.get('term_evaluations', []) if t.get('score', 0) < 70]) if context.terminology_analysis else 0}개
     """
     
     await run_agent_with_llm(llm_analyst_agent, llm_query, "llm_analysis", context_info)
@@ -1252,6 +1272,7 @@ async def run_comprehensive_analysis():
     Data Understanding Agent 결과:
     - 데이터 구조: {context.data_info if context.data_info else "아직 분석 중"}
     - 분석 계획: {context.analysis_plan if context.analysis_plan else "아직 분석 중"}
+    - 용어 이해도: {context.terminology_analysis.get('overall_score', 'N/A') if context.terminology_analysis else "아직 분석 중"}%
     
     Category Analysis Agent 결과:
     - 카테고리 분석: {context.category_analysis if hasattr(context, 'category_analysis') and context.category_analysis else "아직 분석 중"}
@@ -1267,6 +1288,11 @@ async def run_comprehensive_analysis():
     
     LLM Analysis Agent 결과:
     - 메시지 분석: {context.message_analysis if context.message_analysis else "아직 분석 중"}
+    
+    용어 검증 결과:
+    - 전체 이해도 점수: {context.terminology_analysis.get('overall_score', 'N/A') if context.terminology_analysis else "아직 분석 중"}%
+    - 분석된 용어 수: {len(context.terminology_analysis.get('term_evaluations', [])) if context.terminology_analysis else 0}개
+    - 미이해 용어: {len([t for t in context.terminology_analysis.get('term_evaluations', []) if t.get('score', 0) < 70]) if context.terminology_analysis else 0}개
     """
     
     await run_agent_with_llm(comprehensive_agent, comprehensive_query, "comprehensive_analysis", context_info)
@@ -1326,6 +1352,15 @@ async def run_comprehensive_analysis():
             'funnel_strategy_analysis': context.funnel_strategy_analysis if hasattr(context, 'funnel_strategy_analysis') and context.funnel_strategy_analysis else "분석 중",
             'structured_llm_analysis': "분석 중"  # 참조하지 않음
         }
+        
+        # 🔍 디버깅: Agent 결과 확인
+        print(f"\n🔍 Agent 결과 딕셔너리 상세:")
+        print(f"  - context.funnel_strategy_analysis 존재: {hasattr(context, 'funnel_strategy_analysis')}")
+        print(f"  - context.funnel_strategy_analysis 값: {getattr(context, 'funnel_strategy_analysis', None)[:200] if getattr(context, 'funnel_strategy_analysis', None) else 'None'}")
+        print(f"  - agent_results['funnel_strategy_analysis'] 타입: {type(agent_results['funnel_strategy_analysis'])}")
+        print(f"  - agent_results['funnel_strategy_analysis'] 길이: {len(str(agent_results['funnel_strategy_analysis'])) if agent_results['funnel_strategy_analysis'] else 0}")
+        if 'funnel_strategy_analysis' in agent_results and agent_results['funnel_strategy_analysis'] != "분석 중":
+            print(f"  - agent_results['funnel_strategy_analysis'] 내용 (처음 500자):\n{str(agent_results['funnel_strategy_analysis'])[:500]}")
         
         # HTML 보고서 생성 (기존)
         report_path = create_comprehensive_html_report(csv_file, agent_results)
