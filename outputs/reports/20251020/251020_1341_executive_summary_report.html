@@ -1,0 +1,475 @@
+
+            <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>SainTwo : 데이터 분석 자동화 Report Poc</title>
+            <style>
+                body {
+                    font-family: 'AppleGothic', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+                    line-height: 1.6;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #f8f9fa;
+                    color: #333;
+                }
+                .container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    background: white;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 10px;
+                }
+                    .executive-summary-box, .message-effectiveness-box {
+                        background: #f8f9fa;
+                        border: 2px solid #e9ecef;
+                        border-radius: 12px;
+                    padding: 25px;
+                        margin: 20px 0;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .key-metrics-grid {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 15px;
+                        margin: 20px 0;
+                    }
+                    .metric-box {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .metric-label {
+                        font-size: 0.9em;
+                        font-weight: 500;
+                        margin-bottom: 8px;
+                        opacity: 0.9;
+                    }
+                    .metric-value {
+                    font-size: 1.8em;
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    .metric-detail {
+                        font-size: 0.8em;
+                        opacity: 0.8;
+                    }
+                    .category-grid, .funnel-list {
+                    display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 10px;
+                        margin: 10px 0;
+                    }
+                    .category-item, .funnel-item {
+                        background: white;
+                        padding: 15px;
+                    border-radius: 8px;
+                        border-left: 4px solid #667eea;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .funnel-item.high {
+                        border-left-color: #28a745;
+                    }
+                    .funnel-item.medium {
+                        border-left-color: #ffc107;
+                    }
+                    .funnel-item.low {
+                        border-left-color: #dc3545;
+                    }
+                    .message-examples {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+                    .message-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-left: 4px solid #6f42c1;
+                }
+                .conversion-rate {
+                        background: #28a745;
+                        color: white;
+                        padding: 5px 10px;
+                        border-radius: 15px;
+                    font-weight: bold;
+                    }
+                    .boxplot-section {
+                        margin: 20px 0;
+                        text-align: center;
+                    }
+                    .boxplot-chart {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .keyword-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        gap: 10px;
+                        margin: 15px 0;
+                    }
+                    .keyword-item {
+                        background: white;
+                        padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                        border: 2px solid #e9ecef;
+                    }
+                    .keyword {
+                        display: block;
+                        font-weight: bold;
+                        color: #495057;
+                        margin-bottom: 5px;
+                    }
+                    .impact {
+                        display: block;
+                        color: #28a745;
+                        font-weight: bold;
+                    }
+                    .tone-features {
+                    display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                        gap: 15px;
+                        margin: 15px 0;
+                    }
+                    .tone-item {
+                    background: white;
+                        padding: 15px;
+                    border-radius: 8px;
+                        border-left: 4px solid #fd7e14;
+                    }
+                    .analysis-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 15px 0;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .analysis-table th {
+                        background: #667eea;
+                        color: white;
+                        padding: 12px;
+                        text-align: left;
+                        font-weight: 600;
+                    }
+                    .analysis-table td {
+                        padding: 12px;
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    .analysis-table tr.high {
+                        background-color: #d4edda;
+                    }
+                    .analysis-table tr.medium {
+                        background-color: #fff3cd;
+                    }
+                    .analysis-table tr.low {
+                        background-color: #f8d7da;
+                    }
+                    .grade-badge {
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 0.8em;
+                    font-weight: bold;
+                    }
+                    .grade-badge.high {
+                        background: #28a745;
+                        color: white;
+                    }
+                    .grade-badge.medium {
+                        background: #ffc107;
+                        color: #212529;
+                    }
+                    .grade-badge.low {
+                        background: #dc3545;
+                    color: white;
+                }
+                    .insight-section {
+                        margin: 20px 0;
+                    }
+                    .pattern-grid {
+                    display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 15px;
+                        margin: 15px 0;
+                    }
+                    .pattern-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border-left: 4px solid #6f42c1;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .conversion-rate {
+                        display: inline-block;
+                        background: #28a745;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 0.8em;
+                        font-weight: bold;
+                        margin-top: 8px;
+                    }
+                    .funnel-strategy-section {
+                        margin: 25px 0;
+                    }
+                    .strategy-groups {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 20px;
+                    }
+                    .strategy-group {
+                        background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                    .strategy-group.high-group {
+                        border-left: 4px solid #28a745;
+                }
+                    .strategy-group.medium-group {
+                        border-left: 4px solid #ffc107;
+                }
+                    .strategy-group.low-group {
+                        border-left: 4px solid #dc3545;
+                    }
+                    .group-funnels {
+                    display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                        margin: 10px 0;
+                    }
+                    .funnel-tag {
+                        padding: 4px 12px;
+                        border-radius: 15px;
+                        font-size: 0.8em;
+                        font-weight: 500;
+                    }
+                    .funnel-tag.high {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+                    .funnel-tag.medium {
+                        background: #fff3cd;
+                        color: #856404;
+                    }
+                    .funnel-tag.low {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+                    .strategy-recommendation {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 6px;
+                        margin-top: 10px;
+                        line-height: 1.6;
+                    }
+                    .insights-text-box, .llm-insights-text-box {
+                        background: #f8f9fa;
+                        border: 2px solid #e9ecef;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .insights-content, .llm-insights-content {
+                        line-height: 1.8;
+                    }
+                    .insights-content ul, .llm-insights-content ul {
+                        margin: 10px 0;
+                        padding-left: 20px;
+                    }
+                    .insights-content li, .llm-insights-content li {
+                        margin: 8px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                        <h1>SainTwo : 데이터 분석 자동화 Report Poc</h1>
+                    <p>생성일: 2025년 10월 20일 13:41</p>
+                </div>
+                
+                    <!-- 첫 번째 박스: Matt Agent: 퍼널 별 성과 분석 -->
+                    <div class="executive-summary-box">
+                        <h2>Matt Agent: 퍼널 별 성과 분석</h2>
+                        
+                        <div class="key-metrics-grid">
+                            <div class="metric-box">
+                                <div class="metric-label">현재 주차</div>
+                                <div class="metric-value">43주차</div>
+                    </div>
+                            <div class="metric-box">
+                                <div class="metric-label">실험군 전환</div>
+                                <div class="metric-value">0건</div>
+                                <div class="metric-detail">전체 발송: 0건</div>
+                    </div>
+                            <div class="metric-box">
+                                <div class="metric-label">실험군 전환율</div>
+                                <div class="metric-value">0.0%</div>
+                    </div>
+                            <div class="metric-box">
+                                <div class="metric-label">평균 Lift</div>
+                                <div class="metric-value">+0.0%p</div>
+                                <div class="metric-detail">vs 대조군</div>
+                    </div>
+                </div>
+                
+                        <p>데이터가 없습니다.</p>
+                    <div class="funnel-strategy-section">
+                        <h4>💡 퍼널별 메시지 전략 제안 (3분위수 기준)</h4>
+                        <div class="strategy-groups">
+                            
+                            <div class="strategy-group high-group">
+                                <h5>🎯 상위 그룹</h5>
+                                <div class="group-funnels"><span class="funnel-tag high">T3__대여 장소 검색</span><span class="funnel-tag high">B4__쿠폰함 조회</span><span class="funnel-tag high">B2__알림센터 클릭</span><span class="funnel-tag high">T4__존 마커 클릭</span><span class="funnel-tag high">R1_결제 퍼널 이탈_예약 화면 진입</span></div>
+                                <div class="strategy-recommendation">
+                                    <strong>전략:</strong> 즉각적 혜택과 명확한 행동 유도를 결합해 예약 전환을 극대화하세요. 할인, 무료 혜택, 개인화된 메시지로 FOMO(기회 상실 공포) 심리를 적극적으로 활용하세요.<br>
+                                    <strong>메시지 패턴:</strong> 혜택 제시→실제 할인/무료 혜택 명확 고지→행동 촉구(FOMO 또는 CTA)→마무리 및 안내<br>
+                                    <strong>공통 특징:</strong> 즉시 예약 행동 유도, 파격 혜택 강조, 개인화된 명칭 사용<br>
+                                    <strong>구체적 제안:</strong><br>  1. 할인·무료 혜택의 정확한 수치와 기간(예: 60%·1일)을 전면 배치<br>  2. 예약 유도를 위한 긴급(FOMO) 키워드와 동적 CTA(지금 사용하기 등) 삽입<br>
+                                    <strong>핵심 키워드:</strong> "할인", "무료", "즉시예약", "크레딧", "쿠폰", "주행요금", "행동촉구", "FOMO"<br>
+                                    <strong>퍼널별 가장 효과적인 문구 (전환율 포함):</strong><br>• E_항공: '🎁 30,000크레딧 지급 완료 #NAME#님 제주에서 필요한 차, 크레딧 할인받고 부담없이 대여하세요! 30,000크레딧 사용하기' (실험군 1.2%, 대조군 0.0%)<br>• R1_결제 퍼널 이탈_예약 화면 진입: '#크레딧 3,000 이상 【주행요금+보장상품 혜택】➕【크레딧 할인】 최대 할인 혜택 모두 적용!' (실험군 46.63%, 대조군 42.46%)<br>• T2__대여시간 설정: '(광고)[쏘카] 4시간 이상 예약 할인🔥 길게 타면 60% 할인 받고 예약할 수 있어요!' (실험군 23.24%, 대조군 18.47%)<br>• T3__대여 장소 검색: '(광고)[쏘카] 전기차 지금 무료예요! 회원님을 위한 전기차 3가지 혜택!' (실험군 23.59%, 대조군 16.67%)<br>• T4__존 마커 클릭: '오늘 예약 시 60%/65% 할인 주행요금 무제한/50km 무료! 망설이지 말고 지금 예약하세요' (실험군 26.67%, 대조군 23.61%)
+                    </div>
+                </div>
+                            
+                            
+                            <div class="strategy-group medium-group">
+                                <h5>⚖️ 중위 그룹</h5>
+                                <div class="group-funnels"><span class="funnel-tag medium">B0_혜택 탐색 중 이탈_접속</span><span class="funnel-tag medium">T5__차량 상세 조회</span><span class="funnel-tag medium">E_항공</span><span class="funnel-tag medium">T2__대여시간 설정</span></div>
+                                <div class="strategy-recommendation">
+                                    <strong>전략:</strong> 혜택 중심 메시지에 구체적 실제 요금 절감 효과와 보장성 안내를 강조해 실질적 가치 인식을 높이세요. 유저 의문(혜택 궁금증 등)에 즉각적으로 답변하세요.<br>
+                                    <strong>메시지 패턴:</strong> 혜택 안내→구체적 절감액 및 혜택 상세→간단한 행동 유도→안심 효과 첨가<br>
+                                    <strong>공통 특징:</strong> 구체적 금액 제시, 복합 혜택 안내, 간결한 행동요소<br>
+                                    <strong>구체적 제안:</strong><br>  1. 전기차·보장상품 무료 등 복수 혜택을 한 문장에 나열<br>  2. 다른 시간/차종 변경 유도시 간결 키워드(예: '60% 할인')와 함께 바로가기 CTA 제공<br>
+                                    <strong>핵심 키워드:</strong> "주행요금", "전기차", "복합혜택", "크레딧", "무료", "즉시예약", "문의응대"<br>
+                                    <strong>퍼널별 가장 효과적인 문구 (전환율 포함):</strong><br>• B0_혜택 탐색 중 이탈_접속: '⚡️전기차 주행요금 0원! 보유한 크레딧으로 부담없이 전기차 이용해보세요' (실험군 39.08%, 대조군 27.48%)<br>• B2__알림센터 클릭: '지금 카셰어링 이용 시 주행요금+보장상품= "0원"' (실험군 16.09%, 대조군 14.39%)<br>• B4__쿠폰함 조회: '(광고)[쏘카] 전기차 주행료 무료⚡ 어디까지 가든 무조건 0원! 지금 0원에 예약해 보세요' (실험군 23.87%, 대조군 17.95%)<br>• T5__차량 상세 조회: '🔌 지금 전기차 타면, 주행요금 [무제한 0원] 혜택 받고 바로 이용해 보세요🚗' (실험군 36.06%, 대조군 29.86%)
+                    </div>
+                </div>
+                            
+                            
+                            <div class="strategy-group low-group">
+                                <h5>⚠️ 하위 그룹</h5>
+                                <div class="group-funnels"><span class="funnel-tag low">미접속</span><span class="funnel-tag low">B3__이벤트탭 클릭</span><span class="funnel-tag low">T1_차량 탐색 중 이탈_가지러가기/부름 클릭</span><span class="funnel-tag low">부름 요금 개편 후 수요 증대</span><span class="funnel-tag low">C1_예약 후 이탈_예약 취소</span></div>
+                                <div class="strategy-recommendation">
+                                    <strong>전략:</strong> 혜택·긴급성 메시지 남용보다 실제 이용 상황·타깃 니즈에 맞춘 맞춤형 메시지와 공감 기반 안내를 활용해 신뢰와 실제 행동을 유도하세요.<br>
+                                    <strong>메시지 패턴:</strong> 이용상황·지역 언급→혜택 강조→개인화 및 행동 촉진→안심/친근 마무리<br>
+                                    <strong>공통 특징:</strong> 혜택 반복·과잉, 익숙한 수신거부 안내, 상황 중심 제안<br>
+                                    <strong>구체적 제안:</strong><br>  1. 지나친 할인·긴급성 강조 대신 이용자 상황에 맞춰 가치 제안(배달, 적립 등) 강화<br>  2. 수신자 이름·행동동기(여행, 주변 차량 없음 등)를 반영한 간결 메시지 최적화<br>
+                                    <strong>핵심 키워드:</strong> "혜택", "적립", "주변차량", "개인화", "여정", "배달", "친근함"<br>
+                                    <strong>퍼널별 가장 효과적인 문구 (전환율 포함):</strong><br>• B3__이벤트탭 클릭: '🔥#NAME님께 딱 맞는 마감특가 혜택 👉【1일 37,000원 + 50km 무료 주행】' (실험군 6.5%, 대조군 6.98%)<br>• C1_예약 후 이탈_예약 취소: '(광고)[쏘카] ⏰단 1번! 60% 추가 할인 OOO님 전용 혜택 받기' (실험군 9.79%, 대조군 0.0%)<br>• T1_차량 탐색 중 이탈_가지러가기/부름 클릭: '[쿠폰]🛎️ 50% 할인 쿠폰 지급 완료 반값이면 망설일 이유가 없죠 🙌' (실험군 29.22%, 대조군 22.36%)<br>• 미접속: '(광고)[쏘카] 전기차 무료 광고 보셨나요? 지금 쏘카에선 전기차 주행요금 완전 무료!' (실험군 4.86%, 대조군 3.94%)<br>• 부름 요금 개편 후 수요 증대: '(광고)[쏘카] 부름 추가 할인 기존보다 6,000원 더 저렴해졌어요! 바로 차 부르러 가기' (실험군 5.04%, 대조군 6.81%)
+                    </div>
+                </div>
+                            
+                    </div>
+                </div>
+                    
+                    </div>
+                    
+                    <!-- 두 번째 박스: 문구 효과성 분석 & 키워드 패턴 -->
+                    <div class="message-effectiveness-box">
+                        <h2>📈 문구 효과성 분석 & 키워드 패턴</h2>
+                        
+                        
+                        
+                        <div class="llm-insights">
+                            <h4>🧠 LLM 기반 문구 분석 인사이트</h4>
+                            
+                            <div class="llm-insights-text-box">
+                                <h5>📋 LLM 분석 종합 결과</h5>
+                                <div class="llm-insights-content">
+                                    
+                    <p><strong>📝 문장 구조 분석:</strong></p>
+                    <ul>
+                        <li>전체 문장 수: 평균 2.1문장 (범위: 1~6문장)</li><li>문장 길이: 평균 74자 (범위: 31~354자)</li><li>복잡도: 대부분 단순~중간, 상위 성과 문구는 2~3문장, 핵심 혜택+CTA로 구성</li><li>주요 유형: 혜택 제시('50% 할인'), 행동 유도('지금 예약'), 긴급성 강조('오늘만')</li><li>문장 흐름: 혜택→행동유도→개인화 순; "지금 예약 시 75% 할인" (2문장/44자, 전환율 34.6%) 예시</li>
+                    </ul>
+                
+                    <p><strong>🔑 핵심 키워드 분석:</strong></p>
+                    <ul>
+                        <li>상위 키워드: '무료' 기여도 +7%p, 포함 문구 전환율 36~56%</li><li>'할인': 기여도 +4~6%p, 포함 문구 평균 전환율 32%</li><li>'마지막', '지금', '쿠폰', '즉시' 등 행동/심리 자극어가 상위</li><li>FOMO 키워드: '지금', '마감', '마지막' 평균 전환율 28%</li><li>혜택/할인 키워드(‘무료’, ‘최대’, ‘쿠폰’): 평균 30.2%</li><li>행동유도 키워드: ‘예약’, ‘확정’, ‘받기’ 포함 시 평균 24.8%</li><li>예시: "주행요금 무제한 무료" 포함 문구(전환율 56%), "할인 쿠폰 지급"(전환율 28.8%)</li>
+                    </ul>
+                
+                    <p><strong>🎭 톤앤매너 분석:</strong></p>
+                    <ul>
+                        <li>인앱 메시지: 직접적·혜택 강조·즉시 행동 유도 → 평균 전환율 33%</li><li>푸시: 반복혜택·마감·즉시성 강조, 다소 짧고 자극적 → 평균 전환율 13%</li><li>LMS(긴문자): 상세 혜택, 다중 안내·개인화, 정보 전달적 → 평균 전환율 10.5%</li><li>행동유도/시그널 강조 시 인앱/푸시 효과 극대화 (‘즉시’, ‘무료’, ‘받기’)</li><li>예시: "전기차 무제한 무료"(인앱/56%), "지금 예약하기"(푸시/24%)</li>
+                    </ul>
+                
+                    <p><strong>📊 전환율 기여 요소 분석:</strong></p>
+                    <ul>
+                        <li>상위 문구 공통: ‘즉시/무료/마지막’ 키워드, 짧고 확실한 혜택+CTA 조합, 실질 가격 제시(전환율 44~56%)</li><li>하위 문구 문제: 복잡한 안내, 쿠폰 반복/단순 나열, 명확 CTA·심리 자극 부족 (전환율 5~9%)</li><li>효과적 조합: 'XX% 할인+무료+오늘만' 구조(예: "60% 할인+주행료 무료+1일 한정", 34.6%)</li><li>성과 예시: "주행요금 무제한 무료!"(56.0%), "마감특가+크레딧 추가 할인"(38.0%)</li><li>비효과적 예시: "합리적인 첫 예약, 50km 무료"(0.1%), "지금 예약해야 이득" (9.0%)
+경영진 주요 인사이트: CRM 전환율은 짧고 명확한 '즉시 혜택+마지막 기회+CTA' 문구에서 극적 상승(Lift +5~10%p). ‘무료·할인·FOMO’ 키워드와 실질 행동 유도 조합이 핵심입니다. 인앱 메시지가 가장 강력하며, 푸시는 반복즉시성에 특화, LMS는 정보 전달에 효과적입니다.</li>
+                    </ul>
+                
+                                </div>
+                </div>
+                
+                            
+            <div class="insight-section">
+                <h5>📊 전환율 기여 상위 키워드</h5>
+                <table class="analysis-table">
+                    <thead>
+                        <tr>
+                            <th>키워드</th>
+                            <th>평균 Lift</th>
+                            <th>포함 문구 전환율</th>
+                            <th>사용 빈도</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+                                키워드 분석 데이터가 없습니다.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+                            
+            <div class="insight-section">
+                <h5>🎯 효과적 문구 패턴</h5>
+                <div class="pattern-grid">
+                    <div class="pattern-item" style="text-align: center; padding: 40px; color: #666;">
+                        <strong>문구 패턴 분석 데이터가 없습니다.</strong><br>
+                        <span>상위 Lift 문구를 찾을 수 없습니다.</span>
+                    </div>
+                </div>
+            </div>
+            
+                            
+            <div class="insight-section">
+                <h5>📈 톤앤매너 효과성</h5>
+                <div class="pattern-grid">
+                    <div class="pattern-item" style="text-align: center; padding: 40px; color: #666;">
+                        <strong>톤앤매너 분석 데이터가 없습니다.</strong><br>
+                        <span>메시지 데이터를 분석할 수 없습니다.</span>
+                    </div>
+                </div>
+            </div>
+            
+                        </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        

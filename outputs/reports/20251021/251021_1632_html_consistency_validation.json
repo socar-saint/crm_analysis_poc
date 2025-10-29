@@ -1,0 +1,83 @@
+{
+  "overall_metrics": {
+    "expected_exp_rate": "15.3%",
+    "expected_ctrl_rate": "9.9%",
+    "expected_lift": "+5.4%p",
+    "expected_total_conversions": "126,900건",
+    "expected_total_sent": "828,733건"
+  },
+  "funnel_validation": {
+    "B0_혜택 탐색 중 이탈_접속": {
+      "expected_exp_rate": "10.3%",
+      "expected_ctrl_rate": "7.3%",
+      "expected_lift": "+1.5%p"
+    },
+    "B2__알림센터 클릭": {
+      "expected_exp_rate": "16.1%",
+      "expected_ctrl_rate": "14.4%",
+      "expected_lift": "+1.7%p"
+    },
+    "B3__이벤트탭 클릭": {
+      "expected_exp_rate": "6.5%",
+      "expected_ctrl_rate": "7.0%",
+      "expected_lift": "-0.5%p"
+    },
+    "B4__쿠폰함 조회": {
+      "expected_exp_rate": "24.7%",
+      "expected_ctrl_rate": "22.7%",
+      "expected_lift": "+1.9%p"
+    },
+    "C1_예약 후 이탈_예약 취소": {
+      "expected_exp_rate": "6.3%",
+      "expected_ctrl_rate": "9.8%",
+      "expected_lift": "-2.7%p"
+    },
+    "E_항공": {
+      "expected_exp_rate": "11.1%",
+      "expected_ctrl_rate": "0.0%",
+      "expected_lift": "+1.2%p"
+    },
+    "R1_결제 퍼널 이탈_예약 화면 진입": {
+      "expected_exp_rate": "40.0%",
+      "expected_ctrl_rate": "33.5%",
+      "expected_lift": "+1.5%p"
+    },
+    "T1_차량 탐색 중 이탈_가지러가기/부름 클릭": {
+      "expected_exp_rate": "23.1%",
+      "expected_ctrl_rate": "23.2%",
+      "expected_lift": "-1.6%p"
+    },
+    "T2__대여시간 설정": {
+      "expected_exp_rate": "23.7%",
+      "expected_ctrl_rate": "18.3%",
+      "expected_lift": "+0.7%p"
+    },
+    "T3__대여 장소 검색": {
+      "expected_exp_rate": "24.2%",
+      "expected_ctrl_rate": "18.4%",
+      "expected_lift": "+3.1%p"
+    },
+    "T4__존 마커 클릭": {
+      "expected_exp_rate": "28.2%",
+      "expected_ctrl_rate": "21.7%",
+      "expected_lift": "+1.7%p"
+    },
+    "T5__차량 상세 조회": {
+      "expected_exp_rate": "28.2%",
+      "expected_ctrl_rate": "26.9%",
+      "expected_lift": "+1.2%p"
+    },
+    "미접속": {
+      "expected_exp_rate": "5.6%",
+      "expected_ctrl_rate": "5.6%",
+      "expected_lift": "-0.1%p"
+    },
+    "부름 요금 개편 후 수요 증대": {
+      "expected_exp_rate": "5.0%",
+      "expected_ctrl_rate": "6.8%",
+      "expected_lift": "-1.8%p"
+    }
+  },
+  "issues_found": [],
+  "recommendations": []
+}

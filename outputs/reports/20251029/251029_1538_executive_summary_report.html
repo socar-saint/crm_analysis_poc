@@ -1,0 +1,465 @@
+
+            <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>SainTwo 🤖 : 데이터 분석 자동화 Report Poc</title>
+            <style>
+                body {
+                    font-family: 'AppleGothic', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+                    line-height: 1.6;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #f8f9fa;
+                    color: #333;
+                }
+                .container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    background: white;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 40px;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 10px;
+                }
+                    .executive-summary-box, .message-effectiveness-box {
+                        background: #f8f9fa;
+                        border: 2px solid #e9ecef;
+                        border-radius: 12px;
+                    padding: 25px;
+                        margin: 20px 0;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .key-metrics-grid {
+                        display: grid;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 15px;
+                        margin: 20px 0;
+                    }
+                    .metric-box {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    padding: 20px;
+                        border-radius: 8px;
+                        text-align: center;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .metric-label {
+                        font-size: 0.9em;
+                        font-weight: 500;
+                        margin-bottom: 8px;
+                        opacity: 0.9;
+                    }
+                    .metric-value {
+                    font-size: 1.8em;
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                    }
+                    .metric-detail {
+                        font-size: 0.8em;
+                        opacity: 0.8;
+                    }
+                    .category-grid, .funnel-list {
+                    display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 10px;
+                        margin: 10px 0;
+                    }
+                    .category-item, .funnel-item {
+                        background: white;
+                        padding: 15px;
+                    border-radius: 8px;
+                        border-left: 4px solid #667eea;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .funnel-item.high {
+                        border-left-color: #28a745;
+                    }
+                    .funnel-item.medium {
+                        border-left-color: #ffc107;
+                    }
+                    .funnel-item.low {
+                        border-left-color: #dc3545;
+                    }
+                    .message-examples {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                    }
+                    .message-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-left: 4px solid #6f42c1;
+                }
+                .conversion-rate {
+                        background: #28a745;
+                        color: white;
+                        padding: 5px 10px;
+                        border-radius: 15px;
+                    font-weight: bold;
+                    }
+                    .boxplot-section {
+                        margin: 20px 0;
+                        text-align: center;
+                    }
+                    .boxplot-chart {
+                    max-width: 100%;
+                    height: auto;
+                    border-radius: 8px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    .keyword-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        gap: 10px;
+                        margin: 15px 0;
+                    }
+                    .keyword-item {
+                        background: white;
+                        padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                        border: 2px solid #e9ecef;
+                    }
+                    .keyword {
+                        display: block;
+                        font-weight: bold;
+                        color: #495057;
+                        margin-bottom: 5px;
+                    }
+                    .impact {
+                        display: block;
+                        color: #28a745;
+                        font-weight: bold;
+                    }
+                    .tone-features {
+                    display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                        gap: 15px;
+                        margin: 15px 0;
+                    }
+                    .tone-item {
+                    background: white;
+                        padding: 15px;
+                    border-radius: 8px;
+                        border-left: 4px solid #fd7e14;
+                    }
+                    .analysis-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 15px 0;
+                        background: white;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .analysis-table th {
+                        background: #667eea;
+                        color: white;
+                        padding: 12px;
+                        text-align: left;
+                        font-weight: 600;
+                    }
+                    .analysis-table td {
+                        padding: 12px;
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    .analysis-table tr.high {
+                        background-color: #d4edda;
+                    }
+                    .analysis-table tr.medium {
+                        background-color: #fff3cd;
+                    }
+                    .analysis-table tr.low {
+                        background-color: #f8d7da;
+                    }
+                    .grade-badge {
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 0.8em;
+                    font-weight: bold;
+                    }
+                    .grade-badge.high {
+                        background: #28a745;
+                        color: white;
+                    }
+                    .grade-badge.medium {
+                        background: #ffc107;
+                        color: #212529;
+                    }
+                    .grade-badge.low {
+                        background: #dc3545;
+                    color: white;
+                }
+                    .insight-section {
+                        margin: 20px 0;
+                    }
+                    .pattern-grid {
+                    display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 15px;
+                        margin: 15px 0;
+                    }
+                    .pattern-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border-left: 4px solid #6f42c1;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .conversion-rate {
+                        display: inline-block;
+                        background: #28a745;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 0.8em;
+                        font-weight: bold;
+                        margin-top: 8px;
+                    }
+                    .funnel-strategy-section {
+                        margin: 25px 0;
+                    }
+                    .strategy-groups {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 20px;
+                    }
+                    .strategy-group {
+                        background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                    .strategy-group.high-group {
+                        border-left: 4px solid #28a745;
+                }
+                    .strategy-group.medium-group {
+                        border-left: 4px solid #ffc107;
+                }
+                    .strategy-group.low-group {
+                        border-left: 4px solid #dc3545;
+                    }
+                    .group-funnels {
+                    display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                        margin: 10px 0;
+                    }
+                    .funnel-tag {
+                        padding: 4px 12px;
+                        border-radius: 15px;
+                        font-size: 0.8em;
+                        font-weight: 500;
+                    }
+                    .funnel-tag.high {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+                    .funnel-tag.medium {
+                        background: #fff3cd;
+                        color: #856404;
+                    }
+                    .funnel-tag.low {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+                    .strategy-recommendation {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 6px;
+                        margin-top: 10px;
+                        line-height: 1.6;
+                    }
+                    .insights-text-box, .llm-insights-text-box {
+                        background: #f8f9fa;
+                        border: 2px solid #e9ecef;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .insights-content, .llm-insights-content {
+                        line-height: 1.8;
+                    }
+                    .insights-content ul, .llm-insights-content ul {
+                        margin: 10px 0;
+                        padding-left: 20px;
+                    }
+                    .insights-content li, .llm-insights-content li {
+                        margin: 8px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                        <h1>SainTwo : 데이터 분석 자동화 Report Poc</h1>
+                    <p>생성일: 2025년 10월 29일 15:38</p>
+                </div>
+                
+                    <!-- 첫 번째 박스: Matt Agent : 퍼널 별 성과 분석 -->
+                    <div class="executive-summary-box">
+                        <h2>Matt Agent: 퍼널 별 성과 분석</h2>
+                        
+                        <div class="key-metrics-grid">
+                            <div class="metric-box">
+                                <div class="metric-label">현재 주차</div>
+                                <div class="metric-value">44주차</div>
+                    </div>
+                            <div class="metric-box">
+                                <div class="metric-label">실험군 전환</div>
+                                <div class="metric-value">0건</div>
+                                <div class="metric-detail">전체 발송: 0건</div>
+                    </div>
+                            <div class="metric-box">
+                                <div class="metric-label">실험군 전환율</div>
+                                <div class="metric-value">0.0%</div>
+                    </div>
+                            <div class="metric-box">
+                                <div class="metric-label">평균 Lift</div>
+                                <div class="metric-value">+0.0%p</div>
+                                <div class="metric-detail">vs 대조군</div>
+                    </div>
+                </div>
+                
+                        <p>데이터가 없습니다.</p>
+                    <div class="funnel-strategy-section">
+                        <h4>💡 퍼널별 메시지 전략 제안 (3분위수 기준)</h4>
+                        <div class="strategy-groups">
+                            
+                            <div class="strategy-group high-group">
+                                <h5>🎯 상위 그룹</h5>
+                                <div class="group-funnels"><span class="funnel-tag high">T3__대여 장소 검색</span><span class="funnel-tag high">T4__존 마커 클릭</span><span class="funnel-tag high">B4__쿠폰함 조회</span><span class="funnel-tag high">B2__알림센터 클릭</span><span class="funnel-tag high">B1__배너 클릭</span></div>
+                                <div class="strategy-recommendation">
+                                    <strong>전략:</strong> Agent 분석 결과 대기 중<br>
+                                    <strong>메시지 패턴:</strong> 분석 중<br>
+                                    <strong>공통점:</strong> 분석 중
+            </div>
+                            </div>
+                            
+                            
+                            <div class="strategy-group medium-group">
+                                <h5>⚖️ 중위 그룹</h5>
+                                <div class="group-funnels"><span class="funnel-tag medium">R1_결제 퍼널 이탈_예약 화면 진입</span><span class="funnel-tag medium">T5__차량 상세 조회</span><span class="funnel-tag medium">B0_혜택 탐색 중 이탈_접속</span><span class="funnel-tag medium">E_항공</span><span class="funnel-tag medium">T2__대여시간 설정</span></div>
+                                <div class="strategy-recommendation">
+                                    <strong>전략:</strong> Agent 분석 결과 대기 중<br>
+                                    <strong>메시지 패턴:</strong> 분석 중<br>
+                                    <strong>공통점:</strong> 분석 중
+            </div>
+                            </div>
+                            
+                            
+                            <div class="strategy-group low-group">
+                                <h5>⚠️ 하위 그룹</h5>
+                                <div class="group-funnels"><span class="funnel-tag low">미접속</span><span class="funnel-tag low">B3__이벤트탭 클릭</span><span class="funnel-tag low">T1_차량 탐색 중 이탈_가지러가기/부름 클릭</span><span class="funnel-tag low">부름 요금 개편 후 수요 증대</span><span class="funnel-tag low">C1_예약 후 이탈_예약 취소</span></div>
+                                <div class="strategy-recommendation">
+                                    <strong>전략:</strong> Agent 분석 결과 대기 중<br>
+                                    <strong>메시지 패턴:</strong> 분석 중<br>
+                                    <strong>공통점:</strong> 분석 중
+            </div>
+                            </div>
+                            
+                    </div>
+                </div>
+                    
+                    </div>
+                    
+                    <!-- 두 번째 박스: 문구 효과성 분석 & 키워드 패턴 -->
+                    <div class="message-effectiveness-box">
+                        <h2>📈 문구 효과성 분석 & 키워드 패턴</h2>
+                        
+                        
+                        
+                        <div class="llm-insights">
+                            <h4>🧠 LLM 기반 문구 분석 인사이트</h4>
+                            
+                            <div class="llm-insights-text-box">
+                                <h5>📋 LLM 분석 종합 결과</h5>
+                                <div class="llm-insights-content">
+                                    
+                    <p><strong>📝 문장 구조 분석:</strong></p>
+                    <ul>
+                        <li>전체 평균 문장 수: 2.2문장 (범위: 1~8문장)</li><li>문장 길이: 평균 73자 (범위: 31~753자), 상위 전환 문구 30~120자 비중 높음</li><li>복잡도: 단순~중간, 핵심 혜택+행동유도 조합이 높음 ("하루 종일 24,900원부터", "지금 예약하면 50% 할인")</li><li>주요 유형: 혜택 안내(무료/할인), 조건제시(시간/크레딧), 행동유도(지금/바로/서둘러요), 긴급성(소멸/마감)</li><li>흐름: [혜택 → 조건 → 즉시 행동 유도], 간결·직관 문구일수록 전환율 상승 ("크레딧 3천 이상 보유 유저 마감특가, 38.0%")</li>
+                    </ul>
+                
+                    <p><strong>🔑 핵심 키워드 분석:</strong></p>
+                    <ul>
+                        <li>상위 키워드(Lift 기여도): "무료"(7.4%), "할인"(6.9%), "지금"(6.2%), "크레딧"(5.5%), "쿠폰"(5.1%), "특가"(4.8%)</li><li>FOMO/희귀성: "소멸", "마감", "매진", "1일", "지금만" 포함 시 평균 전환율 9.1~12.4%p 상승</li><li>할인/혜택 키워드: "할인", "무료", "쿠폰" 포함 평균 전환율 27.6% ("무료" 문구 44.0% ~ 9.1%)</li><li>행동유도 키워드: "지금", "바로", "확정" 포함 평균 전환율 29.3%</li><li>예시: "55% 즉시 할인"(41.0%), "주행요금 무료"(37.0%), "특가로 이용"(33.0%)</li>
+                    </ul>
+                
+                    <p><strong>🎭 톤앤매너 분석:</strong></p>
+                    <ul>
+                        <li>인앱 메시지: 가장 직관적·즉시성·개인화 강함, 평균 전환율 33.2%</li><li>푸시: 짧고 행동유도/혜택 강조, 전환율 12.6%</li><li>LMS: 설명·혜택 안내 위주, 전환율 10.8%</li><li>친구톡: 안내형·개인화, 전환율 9.0%</li><li>채널별 최적 톤: [인앱] 즉시 행동/친근/개인화, [푸시] 혜택+FOMO+행동유도, [LMS] 상세 안내+혜택</li>
+                    </ul>
+                
+                    <p><strong>📊 전환율 기여 요소 분석:</strong></p>
+                    <ul>
+                        <li>상위 문구 특징: 가격 구체화+즉시행동+개인화+이모지("하루 종일 24,900원부터!", 전환율 38.0%)</li><li>하위 문구 특징: 단순 쿠폰 반복/설명 중심/길이 과다("무료주행 안내", 0.1~1.2%)</li><li>효과적인 조합: [혜택+즉시 행동+개인화]가 결합될 때 전환율 최고 ("55% 즉시 할인", "주행요금 무제한 무료" 등 40%대)</li><li>불필요한 장문·조건 반복은 오히려 효율 저하(300자 이상/설명열거시 전환율 4~10%)</li><li>핵심: 메시지는 “구체 혜택→행동 유도→개인화” 3요소에 집중 시 최상위 효과</li>
+                    </ul>
+                
+                                </div>
+                </div>
+                
+                            
+            <div class="insight-section">
+                <h5>📊 전환율 기여 상위 키워드</h5>
+                <table class="analysis-table">
+                    <thead>
+                        <tr>
+                            <th>키워드</th>
+                            <th>평균 Lift</th>
+                            <th>포함 문구 전환율</th>
+                            <th>사용 빈도</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+                                키워드 분석 데이터가 없습니다.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+                            
+            <div class="insight-section">
+                <h5>🎯 효과적 문구 패턴</h5>
+                <div class="pattern-grid">
+                    <div class="pattern-item" style="text-align: center; padding: 40px; color: #666;">
+                        <strong>문구 패턴 분석 데이터가 없습니다.</strong><br>
+                        <span>상위 Lift 문구를 찾을 수 없습니다.</span>
+                    </div>
+                </div>
+            </div>
+            
+                            
+            <div class="insight-section">
+                <h5>📈 톤앤매너 효과성</h5>
+                <div class="pattern-grid">
+                    <div class="pattern-item" style="text-align: center; padding: 40px; color: #666;">
+                        <strong>톤앤매너 분석 데이터가 없습니다.</strong><br>
+                        <span>메시지 데이터를 분석할 수 없습니다.</span>
+                    </div>
+                </div>
+            </div>
+            
+                        </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        

@@ -1,0 +1,28 @@
+{
+  "text_characteristics": {
+    "average_length": 94.82178217821782,
+    "length_std": 66.11148100588943,
+    "length_correlation": -0.24107452445098224,
+    "emoji_usage": {
+      "average_emojis": 1.0297029702970297,
+      "emoji_correlation": 0.040543361264379296
+    },
+    "number_usage": {
+      "average_numbers": 2.712871287128713,
+      "number_correlation": -0.16029470264774318
+    },
+    "special_characters": {
+      "average_special": 7.851485148514851,
+      "special_correlation": -0.2164748691193536
+    }
+  },
+  "insights": [
+    "문구 길이와 전환율의 상관관계: -0.241",
+    "이모지 사용과 전환율의 상관관계: 0.041",
+    "숫자 사용과 전환율의 상관관계: -0.160",
+    "특수문자 사용과 전환율의 상관관계: -0.216"
+  ],
+  "recommendations": [
+    "문구 길이를 줄이면 전환율 향상 가능"
+  ]
+}
